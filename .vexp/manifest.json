@@ -1,0 +1,17 @@
+{
+  "file_hashes": {
+    "AGENTS.md": "ec571c2a2865dcbd61d6b5e04a0477eed6282a391b0cdef4c0455d2a7744f699",
+    "README.md": "41d82e25d6388163d9aa7e851db1af5d069d8640a73513316441c58192b9d63b",
+    "claude-code-kickoff-brief.md": "1e15cd19a62e00b6cb05f5a529a027ecc3a9495e75e9ad95022c7eaf00b82533",
+    "spec-seo-templates-saas.md": "cb6c1be084621ecf07dda5bebbb727b9c3a224a0f9d08ea621c91aeb123ec892"
+  },
+  "indexed_at_commit": "445ec904d42307e9c1412e56a0c51c7bb16f7237",
+  "indexed_at_timestamp": "2026-07-27T15:48:47.005003870+00:00",
+  "schema_version": 3,
+  "stats": {
+    "total_edges": 90,
+    "total_files": 4,
+    "total_nodes": 94
+  },
+  "vexp_version": "2.3.1"
+}

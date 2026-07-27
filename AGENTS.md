@@ -38,6 +38,30 @@ need to be installed by the update script:
 - pnpm 10 (preferred; use for the future workspace)
 - Wrangler (Cloudflare CLI) via `npx wrangler` (v10)
 - Python 3.12
+- `vexp-cli` (global) — Graph-RAG context engine; refreshed by the startup update script
+
+### PATH gotcha (npm -g / vexp)
+
+`/exec-daemon` is ahead of nvm on `PATH`, so bare `node`/`npm` can resolve to
+`/exec-daemon/node` with global prefix `/` and break `npm install -g`. Prefer the nvm
+binaries (already prepended in `~/.bashrc` for interactive shells), or call npm via:
+
+`"$HOME/.nvm/versions/node/$(ls "$HOME/.nvm/versions/node" | tail -1)/bin/npm" …`
+
+Same rule for invoking `vexp` if the shell PATH is wrong.
+
+### vexp
+
+Project is initialized (`vexp.toml`, `.vexp/`). Useful commands:
+
+- `vexp daemon-cmd start` — background daemon + MCP HTTP (default `http://127.0.0.1:7821`)
+- `vexp doctor` — diagnose daemon/MCP/license state
+- `vexp capsule "<query>"` — context capsule for a task
+- `vexp index` — re-index after large changes
+
+Git hooks under `.git/hooks` (pre-commit / post-checkout / post-merge) auto-refresh the
+index; they are local to the clone (not committed). Free plan limits apply without a
+license JWT.
 
 ### Setup / run once code is scaffolded
 
