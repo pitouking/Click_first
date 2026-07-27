@@ -38,8 +38,8 @@
     "packages/shared-types/src/service-catalog.ts": "14010ba2e938df3d6cc364ac8e44b1013367810d8d35ad6af31e0419253d735b",
     "spec-seo-templates-saas.md": "cb6c1be084621ecf07dda5bebbb727b9c3a224a0f9d08ea621c91aeb123ec892"
   },
-  "indexed_at_commit": "e32eb66449d4c61153d267ac026bcb4767463b8a",
-  "indexed_at_timestamp": "2026-07-27T18:02:39.314510345+00:00",
+  "indexed_at_commit": "9e1cd4ba1e19532ad5bcff2847361af9e9d7ae81",
+  "indexed_at_timestamp": "2026-07-27T18:02:45.524939474+00:00",
   "schema_version": 3,
   "stats": {
     "total_edges": 173,

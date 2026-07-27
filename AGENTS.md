@@ -68,14 +68,15 @@ Note: this Cloud Agent session’s built-in MCP catalog may not include vexp; us
 
 - Install: `pnpm install` (also in the startup update script).
 - D1 local migrations: `pnpm db:migrate:local`
-- Worker API: `pnpm dev:api` → `http://127.0.0.1:8787` (`/health`, `/gbp/diagnose`, `/site/extract`, `/generate-page`, `/generate-image`, `/publish-site`).
-- Astro template: `pnpm dev:astro` → `http://127.0.0.1:4321` (fixture plombier by default; generated content under `apps/astro-template/src/data/generated/` after demo:e2e).
-- Dashboard: `pnpm dev:dashboard` → `http://127.0.0.1:3000` (pass `?site_id=`). Auth intended via Cloudflare Access — no app auth in MVP.
-- Demo E2E (API must be up): `pnpm --filter @click-first/worker-api demo:e2e`
-- Without provider API keys, `generateContent` uses deterministic fixtures (still valid for Home + Service + JSON-LD).
-- All provider API keys (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `DEEPSEEK_API_KEY`,
-  `FAL_AI_API_KEY`, `CLOUDFLARE_API_TOKEN`) are **Worker secrets only** — never expose them
-  to any frontend bundle. Use `apps/worker-api/.dev.vars` for local wrangler.
+- Worker API: `pnpm dev:api` → `http://127.0.0.1:8787`
+  - Core: `/gbp/diagnose`, `/site/extract`, `/generate-page`, `/generate-image`, `/publish-site`
+  - Sites: `GET/POST /sites`, `GET /sites/:id`, `GET /sites/:id/pages`, `GET /sites/:id/export`, `POST /sites/:id/sync-gbp`
+  - Matrix: `POST /generate-matrix` (core pages + Services × Locations)
+- Astro template: `pnpm dev:astro` → `http://127.0.0.1:4321` (fixture by default; after `demo:e2e`, uses `apps/astro-template/src/data/generated/site.json`).
+- Dashboard: `pnpm dev:dashboard` → onboarding + checklist GBP + matrice S×L + publish (`?site_id=`).
+- Demo E2E (API must be up): `pnpm --filter @click-first/worker-api demo:e2e` (7 services × 3 locations + pages core → ~35 pages).
+- Without provider API keys, `generateContent` uses deterministic fixtures (still valid for all page types + JSON-LD).
+- All provider API keys are **Worker secrets only** — use `apps/worker-api/.dev.vars`.
 
 ### Setup / run once code is scaffolded (legacy note)
 
