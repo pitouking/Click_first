@@ -52,16 +52,25 @@ Same rule for invoking `vexp` if the shell PATH is wrong.
 
 ### vexp
 
-Project is initialized (`vexp.toml`, `.vexp/`). Useful commands:
+Project is initialized and Cursor MCP is configured:
+
+- Config: `.cursor/mcp.json` + `.cursor/rules` (written by `vexp setup --agents cursor`)
+- Index: `vexp.toml`, `.vexp/`
+- License: activated on the VM under `~/.vexp/` (not in git) — requires a saved snapshot
+  to persist across pods
+
+Useful commands:
 
 - `vexp daemon-cmd start` — background daemon + MCP HTTP (default `http://127.0.0.1:7821`)
 - `vexp doctor` — diagnose daemon/MCP/license state
-- `vexp capsule "<query>"` — context capsule for a task
+- `vexp capsule "<query>"` / `vexp setup --agents cursor` — capsule / re-wire Cursor MCP
 - `vexp index` — re-index after large changes
 
 Git hooks under `.git/hooks` (pre-commit / post-checkout / post-merge) auto-refresh the
-index; they are local to the clone (not committed). Free plan limits apply without a
-license JWT.
+index; they are local to the clone (not committed).
+
+Note: this Cloud Agent session’s built-in MCP catalog may not include vexp; use the CLI
+(`vexp capsule`, `vexp index`, …) here. Desktop Cursor picks up `.cursor/mcp.json`.
 
 ### Setup / run once code is scaffolded
 
