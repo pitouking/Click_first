@@ -14,3 +14,4 @@ apps/astro-template/public/generated
 coverage
 *.log
 .turbo
+*.tsbuildinfo

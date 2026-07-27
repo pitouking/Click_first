@@ -37,8 +37,8 @@
     "packages/shared-types/src/index.ts": "79571cd36e46a9204294bf726c55e3184b1be2b2a9c007060a9992b4a87ca0b1",
     "spec-seo-templates-saas.md": "cb6c1be084621ecf07dda5bebbb727b9c3a224a0f9d08ea621c91aeb123ec892"
   },
-  "indexed_at_commit": "1cd3fcc1eb106a3d23f64fb1c072ed5e8c5760ee",
-  "indexed_at_timestamp": "2026-07-27T16:09:51.850520551+00:00",
+  "indexed_at_commit": "387a8f295efb7b9136ead5649f2c90d2c61f6e06",
+  "indexed_at_timestamp": "2026-07-27T16:10:00.325042312+00:00",
   "schema_version": 3,
   "stats": {
     "total_edges": 158,
