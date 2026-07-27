@@ -80,6 +80,38 @@ export interface PageSectionsService {
   cta: string;
 }
 
+export interface PageSectionsCategory {
+  intro: string;
+  services_in_category: { name: string; summary: string }[];
+  trust_building: string;
+  faq: FaqItem[];
+  cta: string;
+}
+
+export interface PageSectionsLocation {
+  intro: string;
+  local_context: string;
+  services_available: { name: string; summary: string }[];
+  trust_building: string;
+  faq: FaqItem[];
+  cta: string;
+}
+
+export interface PageSectionsAbout {
+  intro: string;
+  story: string;
+  values: string[];
+  trust_building: string;
+  cta: string;
+}
+
+export interface PageSectionsContact {
+  intro: string;
+  how_to_reach: string;
+  service_area: string;
+  cta: string;
+}
+
 export interface PageContentBase {
   page_type: PageType;
   slug: string;
@@ -102,7 +134,55 @@ export interface ServicePageContent extends PageContentBase {
   sections: PageSectionsService;
 }
 
-export type PageContent = HomePageContent | ServicePageContent | PageContentBase;
+export interface CategoryPageContent extends PageContentBase {
+  page_type: "category";
+  sections: PageSectionsCategory;
+}
+
+export interface LocationPageContent extends PageContentBase {
+  page_type: "location";
+  sections: PageSectionsLocation;
+}
+
+export interface AboutPageContent extends PageContentBase {
+  page_type: "about";
+  sections: PageSectionsAbout;
+}
+
+export interface ContactPageContent extends PageContentBase {
+  page_type: "contact";
+  sections: PageSectionsContact;
+}
+
+export type PageContent =
+  | HomePageContent
+  | ServicePageContent
+  | CategoryPageContent
+  | LocationPageContent
+  | AboutPageContent
+  | ContactPageContent
+  | PageContentBase;
+
+export interface GenerateMatrixRequest {
+  site_id: string;
+  /** If empty, use all site services × locations */
+  services?: string[];
+  locations?: string[];
+  include_core_pages?: boolean;
+}
+
+export interface SyncGbpRequest {
+  site_id: string;
+}
+
+export interface SiteSummary {
+  id: string;
+  business_name: string;
+  primary_category: string | null;
+  url: string | null;
+  updated_at: string;
+  pages_count?: number;
+}
 
 export interface GbpDiagnoseRequest {
   business_name: string;

@@ -1,6 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import type { PageContent } from "@click-first/shared-types";
 import fixture from "./fixture-local-business.json";
 
@@ -31,8 +30,7 @@ export interface SiteBundle {
   }>;
 }
 
-const dir = dirname(fileURLToPath(import.meta.url));
-const generatedPath = join(dir, "..", "data", "generated", "site.json");
+const generatedPath = join(process.cwd(), "src", "data", "generated", "site.json");
 
 export function loadSiteBundle(): SiteBundle {
   if (existsSync(generatedPath)) {
@@ -42,10 +40,21 @@ export function loadSiteBundle(): SiteBundle {
 }
 
 export function navFromBundle(bundle: SiteBundle) {
-  return bundle.pages
-    .filter((p) => p.page_type === "service")
+  const services = bundle.pages
+    .filter((p) => p.page_type === "service" && p.slug && !p.slug.includes("-a-"))
+    .slice(0, 6)
     .map((p) => ({
       href: `/${p.slug}/`,
       label: p.h1.split(" à ")[0] || p.h1,
     }));
+  const extras = bundle.pages
+    .filter((p) => ["about", "contact", "location"].includes(p.page_type))
+    .map((p) => ({
+      href: `/${p.slug}/`,
+      label:
+        p.page_type === "about" ? "À propos" : p.page_type === "contact" ? "Contact" : p.h1.split(" à ").pop() || p.h1,
+    }));
+  // Prefer core extras first, then a few services
+  const about = extras.filter((e) => e.label === "À propos" || e.label === "Contact");
+  return [...about, ...services].slice(0, 8);
 }

@@ -1,8 +1,12 @@
 import type {
   AiTask,
+  AboutPageContent,
   BusinessProfile,
+  CategoryPageContent,
+  ContactPageContent,
   GeneratePageRequest,
   HomePageContent,
+  LocationPageContent,
   PageContent,
   ServicePageContent,
 } from "@click-first/shared-types";
@@ -78,7 +82,12 @@ function pickProvider(task: AiTask, env: Env): "anthropic" | "deepseek" | "opena
 }
 
 function fixtureContent(task: AiTask, payload: GenerateContentPayload): unknown {
-  if (task === "home_copy" || task === "service_copy") {
+  if (
+    task === "home_copy" ||
+    task === "service_copy" ||
+    task === "about_copy" ||
+    task === "location_copy"
+  ) {
     return buildPageFixture(payload as GeneratePageRequest);
   }
   if (task === "gbp_diagnose") {
@@ -140,19 +149,21 @@ export function buildPageFixture(req: GeneratePageRequest): PageContent {
 
   if (req.page_type === "service") {
     const service = req.service || bp.services[0] || "Service";
-    const slug = slugify(service);
+    const location = req.location || null;
+    const place = location || city;
+    const slug = location ? `${slugify(service)}-a-${slugify(location)}` : slugify(service);
     const page: ServicePageContent = {
       page_type: "service",
       slug,
-      title_tag: `${service} à ${city} | ${name}`,
-      meta_description: `${service} à ${city} par ${name}. Diagnostic, devis transparent, intervention soignée.`,
-      h1: `${service} à ${city}`,
+      title_tag: `${service} à ${place} | ${name}`,
+      meta_description: `${service} à ${place} par ${name}. Diagnostic, devis transparent, intervention soignée.`,
+      h1: `${service} à ${place}`,
       sections: {
-        intro: `Besoin d'un ${service.toLowerCase()} à ${city} ? ${name} accompagne les habitants avec un diagnostic clair et une intervention planifiée.`,
+        intro: `Besoin d'un ${service.toLowerCase()} à ${place} ? ${name} accompagne les habitants avec un diagnostic clair et une intervention planifiée.`,
         service_details: [
           {
             h2: `Comment se déroule un ${service.toLowerCase()} ?`,
-            content: `Nous analysons le besoin, proposons un devis détaillé, puis réalisons l'intervention à ${city} dans les règles de l'art.`,
+            content: `Nous analysons le besoin, proposons un devis détaillé, puis réalisons l'intervention à ${place} dans les règles de l'art.`,
           },
           {
             h2: "Ce qui est inclus",
@@ -163,7 +174,7 @@ export function buildPageFixture(req: GeneratePageRequest): PageContent {
         trust_building: `${name} documente chaque intervention — aucune donnée inventée : NAP et avis issus de vos sources validées.`,
         faq: [
           {
-            question: `Combien coûte un ${service.toLowerCase()} à ${city} ?`,
+            question: `Combien coûte un ${service.toLowerCase()} à ${place} ?`,
             answer:
               "Le tarif dépend du diagnostic. Nous fournissons un devis écrit avant travaux — jamais de chiffre inventé dans le contenu.",
           },
@@ -172,12 +183,128 @@ export function buildPageFixture(req: GeneratePageRequest): PageContent {
             answer: "Oui, idéalement pour valider les choix techniques et réceptionner les travaux.",
           },
         ],
-        cta: `Demandez votre devis ${service.toLowerCase()} à ${city}`,
+        cta: `Demandez votre devis ${service.toLowerCase()} à ${place}`,
       },
       schema: { type: "Service", auto_generated: true },
       images: {},
       internal_links: { related_services: bp.services.filter((s) => s !== service).slice(0, 3) },
       status: "draft",
+    };
+    return page;
+  }
+
+  if (req.page_type === "category") {
+    const category = req.service || bp.primary_category || "Services";
+    const page: CategoryPageContent = {
+      page_type: "category",
+      slug: slugify(category),
+      title_tag: `${category} à ${city} | ${name}`,
+      meta_description: `${category} à ${city} — prestations ${name}.`,
+      h1: `${category} à ${city}`,
+      sections: {
+        intro: `${name} regroupe sous « ${category} » des prestations locales à ${city}.`,
+        services_in_category: bp.services.slice(0, 8).map((s) => ({
+          name: s,
+          summary: `${s} proposé par ${name} à ${city}.`,
+        })),
+        trust_building: `Catégorie alignée sur le profil métier — aucune invention de services hors liste validée.`,
+        faq: [
+          {
+            question: `Quels services ${category.toLowerCase()} proposez-vous à ${city} ?`,
+            answer: bp.services.length
+              ? `Parmi les prestations listées : ${bp.services.slice(0, 5).join(", ")}.`
+              : "La liste des services est à compléter dans le dashboard.",
+          },
+        ],
+        cta: `Voir les services ${category.toLowerCase()} à ${city}`,
+      },
+      schema: { type: "CollectionPage", auto_generated: true },
+      images: {},
+      status: "draft",
+    };
+    return page;
+  }
+
+  if (req.page_type === "location") {
+    const location = req.location || bp.locations[0] || city;
+    const page: LocationPageContent = {
+      page_type: "location",
+      slug: `zone-${slugify(location)}`,
+      title_tag: `${bp.primary_category || "Services"} à ${location} | ${name}`,
+      meta_description: `${name} intervient à ${location} et alentours.`,
+      h1: `${bp.primary_category || "Services locaux"} à ${location}`,
+      sections: {
+        intro: `${name} accompagne les habitants de ${location} pour leurs projets locaux.`,
+        local_context: `Zone d'intervention : ${location}. Les services listés ci-dessous correspondent au catalogue validé du site — rien n'est inventé.`,
+        services_available: bp.services.map((s) => ({
+          name: s,
+          summary: `${s} à ${location}.`,
+        })),
+        trust_building: `NAP et zone issus du profil business — pas de quartiers inventés.`,
+        faq: [
+          {
+            question: `Intervenez-vous bien à ${location} ?`,
+            answer: `Oui, ${location} fait partie des zones déclarées pour ${name}.`,
+          },
+        ],
+        cta: `Demander un devis à ${location}`,
+      },
+      schema: { type: "WebPage", auto_generated: true },
+      images: {},
+      status: "draft",
+    };
+    return page;
+  }
+
+  if (req.page_type === "about") {
+    const page: AboutPageContent = {
+      page_type: "about",
+      slug: "a-propos",
+      title_tag: `À propos | ${name}`,
+      meta_description: `Découvrez ${name}, entreprise locale à ${city}.`,
+      h1: `À propos de ${name}`,
+      sections: {
+        intro: `${name} est une entreprise locale basée à ${city}.`,
+        story: bp.description
+          ? bp.description
+          : `Notre équipe accompagne particuliers et professionnels sur ${bp.primary_category || "leurs projets"} à ${city}. (Description longue à compléter si absente du profil.)`,
+        values: ["Transparence des devis", "Travaux documentés", "Ancrage local"],
+        trust_building:
+          bp.missing_fields?.includes("certifications")
+            ? "Certifications à compléter dans le dashboard."
+            : `Informations légales et credentials : uniquement si fournis (SIRET, labels) — jamais inventés.`,
+        cta: "Parler à l'équipe",
+      },
+      schema: { type: "AboutPage", auto_generated: true },
+      images: {},
+      status: "draft",
+    };
+    return page;
+  }
+
+  if (req.page_type === "contact") {
+    const address = [bp.nap.streetAddress || bp.nap.address, bp.nap.postalCode, bp.nap.addressLocality]
+      .filter(Boolean)
+      .join(", ");
+    const page: ContactPageContent = {
+      page_type: "contact",
+      slug: "contact",
+      title_tag: `Contact | ${name}`,
+      meta_description: `Contactez ${name} à ${city}.`,
+      h1: `Contactez ${name}`,
+      sections: {
+        intro: `Une question sur un devis ou une intervention à ${city} ?`,
+        how_to_reach: bp.nap.phone
+          ? `Téléphone : ${bp.nap.phone}${address ? ` — Adresse : ${address}` : ""}`
+          : "Téléphone à compléter dans le dashboard (NAP).",
+        service_area: bp.locations.length
+          ? `Zones : ${bp.locations.join(", ")}`
+          : `Zone principale : ${city}`,
+        cta: "Demander un rappel",
+      },
+      schema: { type: "ContactPage", auto_generated: true },
+      images: {},
+      status: bp.nap.phone ? "draft" : "a_completer",
     };
     return page;
   }

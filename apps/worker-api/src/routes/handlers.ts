@@ -7,7 +7,7 @@ import type {
   PublishSiteRequest,
   SiteExtractRequest,
 } from "@click-first/shared-types";
-import { generateContent, slugify } from "../ai/generateContent";
+import { buildPageFixture, generateContent, slugify } from "../ai/generateContent";
 import type { Env } from "../env";
 import { diagnoseGbp } from "../gbp/diagnose";
 import { id, json, readJson } from "../http";
@@ -45,7 +45,9 @@ export async function handleGeneratePage(request: Request, env: Env): Promise<Re
         ? "about_copy"
         : body.page_type === "location"
           ? "location_copy"
-          : "service_copy";
+          : body.page_type === "category" || body.page_type === "contact" || body.page_type === "service"
+            ? "service_copy"
+            : "service_copy";
 
   const generated = (await generateContent(
     task,
@@ -58,9 +60,15 @@ export async function handleGeneratePage(request: Request, env: Env): Promise<Re
     env,
   )) as PageContent;
 
+  // Guarantee fixture path for category/contact even if provider returns a stub
+  const page =
+    generated && "sections" in generated && generated.sections
+      ? generated
+      : buildPageFixture(body);
+
   const { graph, missing_fields } = buildJsonLd({
     business: body.business_profile,
-    page: generated,
+    page,
     pageType: body.page_type,
   });
 
@@ -70,10 +78,13 @@ export async function handleGeneratePage(request: Request, env: Env): Promise<Re
   if (siteId) {
     pageId = id("page");
     const slug =
-      generated.slug ||
+      page.slug ||
       (body.page_type === "home" ? "" : slugify(body.service || body.page_type));
-    const status = missing_fields.length ? "a_completer" : "draft";
-    generated.status = status === "a_completer" ? "a_completer" : "draft";
+    // a_completer only for critical NAP gaps — optional legal fields stay listed in missing_fields
+    const criticalMissing = missing_fields.filter(
+      (f) => f.startsWith("nap.") || f === "nap.phone" || f === "nap.streetAddress" || f === "nap.addressLocality",
+    );
+    page.status = criticalMissing.length ? "a_completer" : page.status === "a_completer" ? "a_completer" : "draft";
 
     await env.DB.prepare(
       `INSERT INTO pages (id, site_id, page_type, slug, title_tag, meta_description, h1, content_json, schema_json, status, service_name, location_name, updated_at)
@@ -85,6 +96,8 @@ export async function handleGeneratePage(request: Request, env: Env): Promise<Re
          content_json=excluded.content_json,
          schema_json=excluded.schema_json,
          status=excluded.status,
+         service_name=excluded.service_name,
+         location_name=excluded.location_name,
          updated_at=datetime('now')`,
     )
       .bind(
@@ -92,20 +105,20 @@ export async function handleGeneratePage(request: Request, env: Env): Promise<Re
         siteId,
         body.page_type,
         slug,
-        generated.title_tag,
-        generated.meta_description,
-        generated.h1,
-        JSON.stringify(generated),
+        page.title_tag ?? null,
+        page.meta_description ?? null,
+        page.h1 ?? null,
+        JSON.stringify(page),
         JSON.stringify(graph),
-        generated.status,
-        body.service || null,
-        body.location || null,
+        page.status,
+        body.service ?? null,
+        body.location ?? null,
       )
       .run();
   }
 
   return json({
-    ...generated,
+    ...page,
     schema_jsonld: graph,
     missing_fields,
     page_id: pageId,
@@ -282,3 +295,262 @@ export async function handleCreateSite(request: Request, env: Env): Promise<Resp
 
   return json({ site_id: siteId, business_name: bp.business_name });
 }
+
+export async function handleExportSite(env: Env, siteId: string): Promise<Response> {
+  const site = await env.DB.prepare(`SELECT * FROM sites WHERE id = ?`).bind(siteId).first();
+  if (!site) return json({ error: "site not found" }, 404);
+
+  const gbp = await env.DB.prepare(`SELECT nap_json FROM gbp_source WHERE site_id = ?`).bind(siteId).first();
+  const nap = gbp ? JSON.parse(String(gbp.nap_json || "{}")) : {};
+
+  const pages = await env.DB.prepare(
+    `SELECT id, slug, page_type, title_tag, meta_description, h1, content_json, schema_json, status
+     FROM pages WHERE site_id = ? ORDER BY page_type, slug`,
+  )
+    .bind(siteId)
+    .all();
+
+  return json({
+    site: {
+      id: site.id,
+      business_name: site.business_name,
+      primary_category: site.primary_category,
+      url: site.url,
+      nap,
+    },
+    pages: pages.results.map((p) => ({
+      id: p.id,
+      slug: p.slug,
+      page_type: p.page_type,
+      title_tag: p.title_tag,
+      meta_description: p.meta_description,
+      h1: p.h1,
+      content: JSON.parse(String(p.content_json || "{}")),
+      schema_jsonld: JSON.parse(String(p.schema_json || "{}")),
+      status: p.status,
+    })),
+  });
+}
+
+export async function handleListSites(env: Env): Promise<Response> {
+  const rows = await env.DB.prepare(
+    `SELECT s.id, s.business_name, s.primary_category, s.url, s.updated_at,
+            (SELECT COUNT(*) FROM pages p WHERE p.site_id = s.id) AS pages_count
+     FROM sites s
+     ORDER BY s.updated_at DESC`,
+  ).all();
+  return json({ sites: rows.results });
+}
+
+export async function handleGetSite(env: Env, siteId: string): Promise<Response> {
+  const site = await env.DB.prepare(`SELECT * FROM sites WHERE id = ?`).bind(siteId).first();
+  if (!site) return json({ error: "site not found" }, 404);
+
+  const services = await env.DB.prepare(`SELECT name, source, has_gbp_equivalent FROM services WHERE site_id = ? ORDER BY name`)
+    .bind(siteId)
+    .all();
+  const locations = await env.DB.prepare(`SELECT name, is_primary FROM locations WHERE site_id = ? ORDER BY is_primary DESC, name`)
+    .bind(siteId)
+    .all();
+  const gbp = await env.DB.prepare(`SELECT * FROM gbp_source WHERE site_id = ?`).bind(siteId).first();
+  const sync = await env.DB.prepare(`SELECT * FROM sync_status WHERE site_id = ?`).bind(siteId).first();
+  const pages = await env.DB.prepare(
+    `SELECT id, page_type, slug, title_tag, status, service_name, location_name, updated_at FROM pages WHERE site_id = ? ORDER BY page_type, slug`,
+  )
+    .bind(siteId)
+    .all();
+
+  let gbp_action_checklist: string[] = [];
+  let optimization_status: string | null = null;
+  if (gbp) {
+    try {
+      gbp_action_checklist = JSON.parse(String(gbp.gbp_action_checklist_json || "[]"));
+    } catch {
+      gbp_action_checklist = [];
+    }
+    optimization_status = String(gbp.optimization_status || null);
+  }
+
+  return json({
+    site,
+    services: services.results,
+    locations: locations.results,
+    gbp: gbp
+      ? {
+          ...gbp,
+          gbp_action_checklist,
+          optimization_status,
+          services: JSON.parse(String(gbp.services_json || "[]")),
+          nap: JSON.parse(String(gbp.nap_json || "{}")),
+          categories: JSON.parse(String(gbp.categories_json || "{}")),
+        }
+      : null,
+    sync: sync
+      ? {
+          ...sync,
+          missing_on_site: JSON.parse(String(sync.missing_on_site_json || "[]")),
+          missing_on_gbp: JSON.parse(String(sync.missing_on_gbp_json || "[]")),
+        }
+      : null,
+    pages: pages.results,
+  });
+}
+
+export async function handleSyncGbp(env: Env, siteId: string): Promise<Response> {
+  const gbp = await env.DB.prepare(`SELECT * FROM gbp_source WHERE site_id = ?`).bind(siteId).first();
+  if (!gbp) return json({ error: "gbp_source missing — import GBP first" }, 400);
+
+  const gbpServices = JSON.parse(String(gbp.services_json || "[]")) as string[];
+  const siteServices = (
+    await env.DB.prepare(`SELECT name FROM services WHERE site_id = ?`).bind(siteId).all<{ name: string }>()
+  ).results.map((r) => r.name);
+
+  const missing_on_site = gbpServices.filter((s) => !siteServices.includes(s));
+  const missing_on_gbp = siteServices.filter((s) => !gbpServices.includes(s));
+
+  const diagnoseInput = {
+    business_name: String(gbp.business_name),
+    categories: JSON.parse(String(gbp.categories_json || "{}")) as {
+      primary: string;
+      secondary: string[];
+    },
+    services: gbpServices,
+    description_length: String(gbp.description || "").length,
+    photos_count: Number(gbp.photos_count || 0),
+    attributes_completed: Boolean(gbp.attributes_completed),
+    hours_provided: JSON.parse(String(gbp.hours_json || "[]")).length > 0,
+    qa_count: Number(gbp.qa_count || 0),
+  };
+  const diagnosed = diagnoseGbp({
+    ...diagnoseInput,
+    categories: {
+      primary: diagnoseInput.categories.primary || "",
+      secondary: diagnoseInput.categories.secondary || [],
+    },
+  });
+
+  await env.DB.prepare(
+    `UPDATE gbp_source
+     SET optimization_status = ?, gbp_action_checklist_json = ?, last_synced = datetime('now'), updated_at = datetime('now')
+     WHERE site_id = ?`,
+  )
+    .bind(diagnosed.optimization_status, JSON.stringify(diagnosed.gbp_action_checklist), siteId)
+    .run();
+
+  await env.DB.prepare(
+    `INSERT INTO sync_status (id, site_id, missing_on_site_json, missing_on_gbp_json, nap_mismatch, last_check)
+     VALUES (?, ?, ?, ?, 0, datetime('now'))
+     ON CONFLICT(site_id) DO UPDATE SET
+       missing_on_site_json = excluded.missing_on_site_json,
+       missing_on_gbp_json = excluded.missing_on_gbp_json,
+       last_check = datetime('now')`,
+  )
+    .bind(id("sync"), siteId, JSON.stringify(missing_on_site), JSON.stringify(missing_on_gbp))
+    .run();
+
+  return json({
+    optimization_status: diagnosed.optimization_status,
+    gbp_action_checklist: diagnosed.gbp_action_checklist,
+    score_breakdown: diagnosed.score_breakdown,
+    missing_on_site,
+    missing_on_gbp,
+  });
+}
+
+export async function handleGenerateMatrix(request: Request, env: Env): Promise<Response> {
+  const body = await readJson<{
+    site_id: string;
+    services?: string[];
+    locations?: string[];
+    include_core_pages?: boolean;
+  }>(request);
+  if (!body.site_id) return json({ error: "site_id required" }, 400);
+
+  const site = await env.DB.prepare(`SELECT * FROM sites WHERE id = ?`).bind(body.site_id).first();
+  if (!site) return json({ error: "site not found" }, 404);
+
+  const dbServices = (
+    await env.DB.prepare(`SELECT name FROM services WHERE site_id = ?`).bind(body.site_id).all<{ name: string }>()
+  ).results.map((r) => r.name);
+  const dbLocations = (
+    await env.DB.prepare(`SELECT name FROM locations WHERE site_id = ?`).bind(body.site_id).all<{ name: string }>()
+  ).results.map((r) => r.name);
+
+  const services = body.services?.length ? body.services : dbServices;
+  const locations = body.locations?.length ? body.locations : dbLocations;
+  if (!services.length || !locations.length) {
+    return json({ error: "services and locations required on site" }, 400);
+  }
+
+  const gbp = await env.DB.prepare(`SELECT * FROM gbp_source WHERE site_id = ?`).bind(body.site_id).first();
+  const nap = gbp ? (JSON.parse(String(gbp.nap_json || "{}")) as BusinessProfile["nap"]) : {};
+  const business_profile: BusinessProfile = {
+    site_id: body.site_id,
+    business_name: String(site.business_name),
+    primary_category: site.primary_category ? String(site.primary_category) : undefined,
+    nap,
+    services: dbServices,
+    locations: dbLocations,
+    url: site.url ? String(site.url) : undefined,
+    priceRange: site.price_range ? String(site.price_range) : undefined,
+  };
+
+  const created: { page_id: string; page_type: string; slug: string; service?: string; location?: string }[] = [];
+
+  async function generateOne(
+    page_type: GeneratePageRequest["page_type"],
+    service?: string | null,
+    location?: string | null,
+  ) {
+    const fakeReq = new Request("http://local/generate-page", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        site_id: body.site_id,
+        business_profile,
+        page_type,
+        service: service ?? null,
+        location: location ?? null,
+      }),
+    });
+    const res = await handleGeneratePage(fakeReq, env);
+    const data = (await res.json()) as { page_id?: string; slug?: string; error?: string };
+    if (!res.ok) throw new Error(data.error || `generate ${page_type} failed`);
+    created.push({
+      page_id: String(data.page_id),
+      page_type,
+      slug: String(data.slug || ""),
+      service: service || undefined,
+      location: location || undefined,
+    });
+  }
+
+  if (body.include_core_pages !== false) {
+    await generateOne("home");
+    await generateOne("about");
+    await generateOne("contact");
+    if (business_profile.primary_category) {
+      await generateOne("category", business_profile.primary_category);
+    }
+    for (const loc of locations) {
+      await generateOne("location", null, loc);
+    }
+    for (const svc of services) {
+      await generateOne("service", svc, null);
+    }
+  }
+
+  // Matrix Services × Locations (page_type service with both set)
+  for (const svc of services) {
+    for (const loc of locations) {
+      await generateOne("service", svc, loc);
+    }
+  }
+
+  return json({
+    site_id: body.site_id,
+    generated_count: created.length,
+    pages: created,
+  });
+}
+

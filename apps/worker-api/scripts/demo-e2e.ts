@@ -1,6 +1,6 @@
 /**
  * End-to-end local demo against wrangler dev:
- * intake → gbp diagnose → generate Home + all Service pages → publish → write Astro content
+ * intake → gbp diagnose → create site → generate-matrix → publish → export Astro content
  */
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
@@ -10,7 +10,6 @@ const API = process.env.API_BASE || "http://127.0.0.1:8787";
 const here = dirname(fileURLToPath(import.meta.url));
 const astroGenerated = join(here, "../../astro-template/src/data/generated/site.json");
 
-/** Services fournis par le client — orthographe corrigée (Terrassement, Revêtement des sols). */
 export const MISSING_SERVICES = [
   "Photovoltaïque",
   "Isolation",
@@ -33,7 +32,7 @@ const business_profile = {
     addressCountry: "FR",
   },
   services: [...MISSING_SERVICES],
-  locations: ["Villeurbanne"],
+  locations: ["Villeurbanne", "Lyon", "Caluire-et-Cuire"],
   hours: [
     {
       dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
@@ -47,11 +46,11 @@ const business_profile = {
   missing_fields: [],
 };
 
-async function post<T>(path: string, body: unknown): Promise<T> {
+async function post<T>(path: string, body?: unknown): Promise<T> {
   const res = await fetch(`${API}${path}`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
+    body: body === undefined ? undefined : JSON.stringify(body),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(`${path} → ${res.status} ${JSON.stringify(data)}`);
@@ -60,10 +59,9 @@ async function post<T>(path: string, body: unknown): Promise<T> {
 
 async function main() {
   console.log("API:", API);
-  console.log("Services:", business_profile.services.join(", "));
+  console.log("Services × Locations:", business_profile.services.length, "×", business_profile.locations.length);
 
-  const health = await fetch(`${API}/health`);
-  if (!health.ok) throw new Error("API health check failed — start wrangler dev first");
+  if (!(await fetch(`${API}/health`)).ok) throw new Error("API health check failed");
 
   const diagnose = await post<{ optimization_status: string; gbp_action_checklist: string[] }>(
     "/gbp/diagnose",
@@ -81,98 +79,34 @@ async function main() {
       qa_count: 1,
     },
   );
-  console.log("GBP diagnose:", diagnose.optimization_status, diagnose.gbp_action_checklist.length, "actions");
+  console.log("GBP diagnose:", diagnose.optimization_status);
 
-  const site = await post<{ site_id: string }>("/sites", {
-    business_profile,
-    gbp: true,
-  });
+  const site = await post<{ site_id: string }>("/sites", { business_profile, gbp: true });
   console.log("site_id:", site.site_id);
 
-  const home = await post<Record<string, unknown>>("/generate-page", {
-    site_id: site.site_id,
-    business_profile: { ...business_profile, site_id: site.site_id },
-    page_type: "home",
-  });
-  console.log("home page:", home.page_id, home.status);
+  await post(`/sites/${site.site_id}/sync-gbp`);
 
-  const servicePages: Record<string, unknown>[] = [];
-  for (const serviceName of business_profile.services) {
-    const page = await post<Record<string, unknown>>("/generate-page", {
+  const matrix = await post<{ generated_count: number; pages: { page_id: string }[] }>("/generate-matrix", {
+    site_id: site.site_id,
+    include_core_pages: true,
+  });
+  console.log("matrix pages:", matrix.generated_count);
+
+  const publish = await post<{ build_status: string; pages_published: string[]; deployed_url: string }>(
+    "/publish-site",
+    {
       site_id: site.site_id,
-      business_profile: { ...business_profile, site_id: site.site_id },
-      page_type: "service",
-      service: serviceName,
-    });
-    servicePages.push(page);
-    console.log("service page:", page.page_id, page.slug, page.status);
-  }
-
-  const pageIds = [home.page_id, ...servicePages.map((p) => p.page_id)];
-  const publish = await post<{
-    build_status: string;
-    deployed_url: string;
-    pages_published: string[];
-  }>("/publish-site", {
-    site_id: site.site_id,
-    page_ids: pageIds,
-    cloudflare_target: "internal",
-  });
-  console.log("publish:", publish.build_status, publish.deployed_url, publish.pages_published.length, "pages");
-
-  const pagesRes = await fetch(`${API}/sites/${site.site_id}/pages`);
-  const pagesJson = (await pagesRes.json()) as {
-    pages: Array<{
-      id: string;
-      slug: string;
-      page_type: string;
-      title_tag: string;
-      status: string;
-    }>;
-  };
-
-  const bundle = {
-    site: {
-      id: site.site_id,
-      business_name: business_profile.business_name,
-      primary_category: business_profile.primary_category,
-      url: business_profile.url,
-      nap: business_profile.nap,
+      page_ids: matrix.pages.map((p) => p.page_id),
+      cloudflare_target: "internal",
     },
-    pages: [
-      {
-        id: String(home.page_id),
-        slug: "",
-        page_type: "home",
-        title_tag: String(home.title_tag),
-        meta_description: String(home.meta_description),
-        h1: String(home.h1),
-        content: home,
-        schema_jsonld: home.schema_jsonld,
-        status: "published",
-      },
-      ...servicePages.map((service) => ({
-        id: String(service.page_id),
-        slug: String(service.slug),
-        page_type: "service",
-        title_tag: String(service.title_tag),
-        meta_description: String(service.meta_description),
-        h1: String(service.h1),
-        content: service,
-        schema_jsonld: service.schema_jsonld,
-        status: "published",
-      })),
-    ],
-  };
+  );
+  console.log("publish:", publish.build_status, publish.pages_published.length, "→", publish.deployed_url);
 
+  const exported = await fetch(`${API}/sites/${site.site_id}/export`).then((r) => r.json());
   await mkdir(dirname(astroGenerated), { recursive: true });
-  await writeFile(astroGenerated, JSON.stringify(bundle, null, 2));
+  await writeFile(astroGenerated, JSON.stringify(exported, null, 2));
   console.log("Wrote Astro content:", astroGenerated);
   console.log("Dashboard:", `http://127.0.0.1:3000/?site_id=${site.site_id}`);
-  console.log(
-    "Pages after publish:",
-    pagesJson.pages.map((p) => `${p.page_type}/${p.slug || "home"}:${p.status}`).join(", "),
-  );
 }
 
 main().catch((err) => {
