@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { PageContent } from "@click-first/shared-types";
-import fixture from "./fixture-plumber.json";
+import fixture from "./fixture-local-business.json";
 
 export interface SiteBundle {
   site: {

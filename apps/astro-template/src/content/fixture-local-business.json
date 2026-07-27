@@ -1,0 +1,413 @@
+{
+  "site": {
+    "id": "site_demo_bati",
+    "business_name": "Bâti Énergie Marcel Test",
+    "primary_category": "Construction & Rénovation",
+    "url": "https://bati-energie-marcel-test.example",
+    "nap": {
+      "phone": "+33478000000",
+      "streetAddress": "12 rue des Artisans",
+      "addressLocality": "Villeurbanne",
+      "postalCode": "69100",
+      "addressCountry": "FR"
+    }
+  },
+  "pages": [
+    {
+      "id": "page_home",
+      "slug": "",
+      "page_type": "home",
+      "title_tag": "Construction & Rénovation à Villeurbanne | Bâti Énergie Marcel Test",
+      "meta_description": "Bâti Énergie Marcel Test — construction, rénovation, isolation et photovoltaïque à Villeurbanne.",
+      "h1": "Construction & Rénovation à Villeurbanne",
+      "status": "draft",
+      "content": {
+        "page_type": "home",
+        "slug": "",
+        "title_tag": "Construction & Rénovation à Villeurbanne | Bâti Énergie Marcel Test",
+        "meta_description": "Bâti Énergie Marcel Test — construction, rénovation, isolation et photovoltaïque à Villeurbanne.",
+        "h1": "Construction & Rénovation à Villeurbanne",
+        "sections": {
+          "hero": {
+            "badge_h1": "Construction & Rénovation à Villeurbanne",
+            "storybrand_title": "Un habitat plus confortable, plus efficace, sans mauvaise surprise",
+            "subtitle": "Bâti Énergie Marcel Test aide les habitants de Villeurbanne à réussir leurs projets d'énergie, d'isolation et de rénovation.",
+            "cta_label": "Demander un devis gratuit"
+          },
+          "intro": "Entreprise locale à Villeurbanne pour l'énergie & isolation, la construction et la rénovation.",
+          "services_overview": [
+            { "name": "Photovoltaïque", "summary": "Installation et suivi de panneaux photovoltaïques à Villeurbanne." },
+            { "name": "Isolation", "summary": "Isolation thermique pour gagner en confort et en performance énergétique." },
+            { "name": "Maçonnerie", "summary": "Travaux de maçonnerie soignés pour constructions et reprises." },
+            { "name": "Rénovation", "summary": "Rénovation globale ou partielle, pilotée de A à Z." },
+            { "name": "Terrassement", "summary": "Préparation de terrain et terrassement pour vos chantiers." },
+            { "name": "Piscines", "summary": "Création et aménagement de piscines sur mesure." },
+            { "name": "Revêtement des sols", "summary": "Pose de revêtements de sols adaptés à chaque pièce." }
+          ],
+          "trust_building": "NAP aligné sur le GBP de test — aucune donnée inventée. Catégories : Énergie & Isolation + Construction & Rénovation.",
+          "faq": [
+            {
+              "question": "Couvrez-vous l'énergie et la rénovation à Villeurbanne ?",
+              "answer": "Oui : photovoltaïque, isolation, maçonnerie, rénovation, terrassement, piscines et revêtement des sols."
+            },
+            {
+              "question": "Le devis est-il gratuit ?",
+              "answer": "Oui, le premier devis est gratuit et sans engagement."
+            }
+          ],
+          "cta": "Parlez-nous de votre projet — réponse sous 24h ouvrées."
+        },
+        "schema": { "type": "LocalBusiness", "auto_generated": true },
+        "images": {},
+        "status": "draft"
+      },
+      "schema_jsonld": {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "LocalBusiness",
+            "@id": "https://bati-energie-marcel-test.example/#business",
+            "name": "Bâti Énergie Marcel Test",
+            "telephone": "+33478000000",
+            "url": "https://bati-energie-marcel-test.example",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "12 rue des Artisans",
+              "addressLocality": "Villeurbanne",
+              "postalCode": "69100",
+              "addressCountry": "FR"
+            },
+            "areaServed": [{ "@type": "City", "name": "Villeurbanne" }],
+            "hasOfferCatalog": {
+              "@type": "OfferCatalog",
+              "name": "Services",
+              "itemListElement": [
+                { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Photovoltaïque" } },
+                { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Isolation" } },
+                { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Maçonnerie" } },
+                { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Rénovation" } },
+                { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Terrassement" } },
+                { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Piscines" } },
+                { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Revêtement des sols" } }
+              ]
+            }
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://bati-energie-marcel-test.example/#website",
+            "name": "Bâti Énergie Marcel Test",
+            "url": "https://bati-energie-marcel-test.example"
+          }
+        ]
+      }
+    },
+    {
+      "id": "page_photovoltaique",
+      "slug": "photovoltaique",
+      "page_type": "service",
+      "title_tag": "Photovoltaïque à Villeurbanne | Bâti Énergie Marcel Test",
+      "meta_description": "Photovoltaïque à Villeurbanne par Bâti Énergie Marcel Test.",
+      "h1": "Photovoltaïque à Villeurbanne",
+      "status": "draft",
+      "content": {
+        "page_type": "service",
+        "slug": "photovoltaique",
+        "title_tag": "Photovoltaïque à Villeurbanne | Bâti Énergie Marcel Test",
+        "meta_description": "Photovoltaïque à Villeurbanne par Bâti Énergie Marcel Test.",
+        "h1": "Photovoltaïque à Villeurbanne",
+        "sections": {
+          "intro": "Projet solaire à Villeurbanne ? Étude, pose et mise en service avec devis clair.",
+          "service_details": [
+            { "h2": "Comment se déroule une installation photovoltaïque ?", "content": "Étude de toiture/exposition, dimensionnement, installation, raccordement et conseils d'usage." },
+            { "h2": "Ce qui est inclus", "content": "Diagnostic initial, matériel validé avec vous, pose, contrôles et nettoyage de chantier." }
+          ],
+          "trust_building": "Données NAP et services issues du profil validé — rien n'est inventé.",
+          "faq": [
+            { "question": "Faut-il une étude avant pose ?", "answer": "Oui, pour dimensionner correctement la production selon votre toiture et votre consommation." },
+            { "question": "Le devis est-il gratuit ?", "answer": "Oui, devis écrit avant travaux." }
+          ],
+          "cta": "Demandez votre devis photovoltaïque à Villeurbanne"
+        },
+        "schema": { "type": "Service", "auto_generated": true },
+        "images": {},
+        "internal_links": { "related_services": ["Isolation", "Rénovation"] },
+        "status": "draft"
+      },
+      "schema_jsonld": {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Service",
+            "name": "Photovoltaïque à Villeurbanne",
+            "provider": { "@id": "https://bati-energie-marcel-test.example/#business" },
+            "areaServed": { "@type": "City", "name": "Villeurbanne" }
+          }
+        ]
+      }
+    },
+    {
+      "id": "page_isolation",
+      "slug": "isolation",
+      "page_type": "service",
+      "title_tag": "Isolation à Villeurbanne | Bâti Énergie Marcel Test",
+      "meta_description": "Isolation à Villeurbanne par Bâti Énergie Marcel Test.",
+      "h1": "Isolation à Villeurbanne",
+      "status": "draft",
+      "content": {
+        "page_type": "service",
+        "slug": "isolation",
+        "title_tag": "Isolation à Villeurbanne | Bâti Énergie Marcel Test",
+        "meta_description": "Isolation à Villeurbanne par Bâti Énergie Marcel Test.",
+        "h1": "Isolation à Villeurbanne",
+        "sections": {
+          "intro": "Isolation des combles, murs ou planchers à Villeurbanne pour plus de confort thermique.",
+          "service_details": [
+            { "h2": "Comment se déroule une isolation ?", "content": "Diagnostic des déperditions, choix des matériaux, pose soignée et contrôle d'étanchéité à l'air." },
+            { "h2": "Ce qui est inclus", "content": "Conseil technique, fournitures validées, mise en œuvre et nettoyage." }
+          ],
+          "trust_building": "Données NAP et services issues du profil validé — rien n'est inventé.",
+          "faq": [
+            { "question": "Quels types d'isolation proposez-vous ?", "answer": "Combles, murs, planchers — selon diagnostic, sans inventer de performances chiffrées." },
+            { "question": "Le devis est-il gratuit ?", "answer": "Oui, devis écrit avant travaux." }
+          ],
+          "cta": "Demandez votre devis isolation à Villeurbanne"
+        },
+        "schema": { "type": "Service", "auto_generated": true },
+        "images": {},
+        "internal_links": { "related_services": ["Photovoltaïque", "Rénovation"] },
+        "status": "draft"
+      },
+      "schema_jsonld": {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Service",
+            "name": "Isolation à Villeurbanne",
+            "provider": { "@id": "https://bati-energie-marcel-test.example/#business" },
+            "areaServed": { "@type": "City", "name": "Villeurbanne" }
+          }
+        ]
+      }
+    },
+    {
+      "id": "page_maconnerie",
+      "slug": "maconnerie",
+      "page_type": "service",
+      "title_tag": "Maçonnerie à Villeurbanne | Bâti Énergie Marcel Test",
+      "meta_description": "Maçonnerie à Villeurbanne par Bâti Énergie Marcel Test.",
+      "h1": "Maçonnerie à Villeurbanne",
+      "status": "draft",
+      "content": {
+        "page_type": "service",
+        "slug": "maconnerie",
+        "title_tag": "Maçonnerie à Villeurbanne | Bâti Énergie Marcel Test",
+        "meta_description": "Maçonnerie à Villeurbanne par Bâti Énergie Marcel Test.",
+        "h1": "Maçonnerie à Villeurbanne",
+        "sections": {
+          "intro": "Travaux de maçonnerie à Villeurbanne : murs, dalles, ouvertures et reprises structurelles.",
+          "service_details": [
+            { "h2": "Comment se déroule un chantier de maçonnerie ?", "content": "Relevé, devis détaillé, réalisation, contrôle et réception avec vous." },
+            { "h2": "Ce qui est inclus", "content": "Préparation, ouvrages maçonnés, finitions convenues et nettoyage de zone." }
+          ],
+          "trust_building": "Données NAP et services issues du profil validé — rien n'est inventé.",
+          "faq": [
+            { "question": "Intervenez-vous sur de la rénovation maçonnée ?", "answer": "Oui, reprises et créations selon diagnostic du support existant." },
+            { "question": "Le devis est-il gratuit ?", "answer": "Oui, devis écrit avant travaux." }
+          ],
+          "cta": "Demandez votre devis maçonnerie à Villeurbanne"
+        },
+        "schema": { "type": "Service", "auto_generated": true },
+        "images": {},
+        "internal_links": { "related_services": ["Terrassement", "Rénovation"] },
+        "status": "draft"
+      },
+      "schema_jsonld": {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Service",
+            "name": "Maçonnerie à Villeurbanne",
+            "provider": { "@id": "https://bati-energie-marcel-test.example/#business" },
+            "areaServed": { "@type": "City", "name": "Villeurbanne" }
+          }
+        ]
+      }
+    },
+    {
+      "id": "page_renovation",
+      "slug": "renovation",
+      "page_type": "service",
+      "title_tag": "Rénovation à Villeurbanne | Bâti Énergie Marcel Test",
+      "meta_description": "Rénovation à Villeurbanne par Bâti Énergie Marcel Test.",
+      "h1": "Rénovation à Villeurbanne",
+      "status": "draft",
+      "content": {
+        "page_type": "service",
+        "slug": "renovation",
+        "title_tag": "Rénovation à Villeurbanne | Bâti Énergie Marcel Test",
+        "meta_description": "Rénovation à Villeurbanne par Bâti Énergie Marcel Test.",
+        "h1": "Rénovation à Villeurbanne",
+        "sections": {
+          "intro": "Rénovation intérieure ou globale à Villeurbanne, coordonnée corps d'état par corps d'état.",
+          "service_details": [
+            { "h2": "Comment se déroule une rénovation ?", "content": "Cahier des besoins, planning, travaux, points d'étape et réception." },
+            { "h2": "Ce qui est inclus", "content": "Pilotage, lots convenus, suivi qualité et nettoyage en fin de chantier." }
+          ],
+          "trust_building": "Données NAP et services issues du profil validé — rien n'est inventé.",
+          "faq": [
+            { "question": "Gérez-vous plusieurs corps d'état ?", "answer": "Oui, selon le périmètre du devis — sans inventer de délais ou prix ici." },
+            { "question": "Le devis est-il gratuit ?", "answer": "Oui, devis écrit avant travaux." }
+          ],
+          "cta": "Demandez votre devis rénovation à Villeurbanne"
+        },
+        "schema": { "type": "Service", "auto_generated": true },
+        "images": {},
+        "internal_links": { "related_services": ["Isolation", "Revêtement des sols"] },
+        "status": "draft"
+      },
+      "schema_jsonld": {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Service",
+            "name": "Rénovation à Villeurbanne",
+            "provider": { "@id": "https://bati-energie-marcel-test.example/#business" },
+            "areaServed": { "@type": "City", "name": "Villeurbanne" }
+          }
+        ]
+      }
+    },
+    {
+      "id": "page_terrassement",
+      "slug": "terrassement",
+      "page_type": "service",
+      "title_tag": "Terrassement à Villeurbanne | Bâti Énergie Marcel Test",
+      "meta_description": "Terrassement à Villeurbanne par Bâti Énergie Marcel Test.",
+      "h1": "Terrassement à Villeurbanne",
+      "status": "draft",
+      "content": {
+        "page_type": "service",
+        "slug": "terrassement",
+        "title_tag": "Terrassement à Villeurbanne | Bâti Énergie Marcel Test",
+        "meta_description": "Terrassement à Villeurbanne par Bâti Énergie Marcel Test.",
+        "h1": "Terrassement à Villeurbanne",
+        "sections": {
+          "intro": "Terrassement et préparation de terrain à Villeurbanne pour constructions, accès et aménagements.",
+          "service_details": [
+            { "h2": "Comment se déroule un terrassement ?", "content": "Relevé du terrain, plan de nivellement, excavation/remblai, compactage et évacuation." },
+            { "h2": "Ce qui est inclus", "content": "Préparation, engins adaptés, mise à niveau et remise en état de la zone." }
+          ],
+          "trust_building": "Données NAP et services issues du profil validé — rien n'est inventé.",
+          "faq": [
+            { "question": "Intervenez-vous avant une piscine ou une dalle ?", "answer": "Oui, le terrassement prépare souvent ces ouvrages." },
+            { "question": "Le devis est-il gratuit ?", "answer": "Oui, devis écrit avant travaux." }
+          ],
+          "cta": "Demandez votre devis terrassement à Villeurbanne"
+        },
+        "schema": { "type": "Service", "auto_generated": true },
+        "images": {},
+        "internal_links": { "related_services": ["Piscines", "Maçonnerie"] },
+        "status": "draft"
+      },
+      "schema_jsonld": {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Service",
+            "name": "Terrassement à Villeurbanne",
+            "provider": { "@id": "https://bati-energie-marcel-test.example/#business" },
+            "areaServed": { "@type": "City", "name": "Villeurbanne" }
+          }
+        ]
+      }
+    },
+    {
+      "id": "page_piscines",
+      "slug": "piscines",
+      "page_type": "service",
+      "title_tag": "Piscines à Villeurbanne | Bâti Énergie Marcel Test",
+      "meta_description": "Piscines à Villeurbanne par Bâti Énergie Marcel Test.",
+      "h1": "Piscines à Villeurbanne",
+      "status": "draft",
+      "content": {
+        "page_type": "service",
+        "slug": "piscines",
+        "title_tag": "Piscines à Villeurbanne | Bâti Énergie Marcel Test",
+        "meta_description": "Piscines à Villeurbanne par Bâti Énergie Marcel Test.",
+        "h1": "Piscines à Villeurbanne",
+        "sections": {
+          "intro": "Création et aménagement de piscines à Villeurbanne, du terrassement aux finitions.",
+          "service_details": [
+            { "h2": "Comment se déroule un projet piscine ?", "content": "Étude d'implantation, terrassement, structure, étanchéité, équipements et mise en eau." },
+            { "h2": "Ce qui est inclus", "content": "Lots convenus au devis, suivi de chantier et conseils d'entretien de démarrage." }
+          ],
+          "trust_building": "Données NAP et services issues du profil validé — rien n'est inventé.",
+          "faq": [
+            { "question": "Le terrassement est-il inclus ?", "answer": "Selon devis : souvent oui, car la préparation du terrain conditionne l'ouvrage." },
+            { "question": "Le devis est-il gratuit ?", "answer": "Oui, devis écrit avant travaux." }
+          ],
+          "cta": "Demandez votre devis piscine à Villeurbanne"
+        },
+        "schema": { "type": "Service", "auto_generated": true },
+        "images": {},
+        "internal_links": { "related_services": ["Terrassement", "Maçonnerie"] },
+        "status": "draft"
+      },
+      "schema_jsonld": {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Service",
+            "name": "Piscines à Villeurbanne",
+            "provider": { "@id": "https://bati-energie-marcel-test.example/#business" },
+            "areaServed": { "@type": "City", "name": "Villeurbanne" }
+          }
+        ]
+      }
+    },
+    {
+      "id": "page_revetement-des-sols",
+      "slug": "revetement-des-sols",
+      "page_type": "service",
+      "title_tag": "Revêtement des sols à Villeurbanne | Bâti Énergie Marcel Test",
+      "meta_description": "Revêtement des sols à Villeurbanne par Bâti Énergie Marcel Test.",
+      "h1": "Revêtement des sols à Villeurbanne",
+      "status": "draft",
+      "content": {
+        "page_type": "service",
+        "slug": "revetement-des-sols",
+        "title_tag": "Revêtement des sols à Villeurbanne | Bâti Énergie Marcel Test",
+        "meta_description": "Revêtement des sols à Villeurbanne par Bâti Énergie Marcel Test.",
+        "h1": "Revêtement des sols à Villeurbanne",
+        "sections": {
+          "intro": "Pose de revêtements de sols à Villeurbanne : préparation du support et finitions soignées.",
+          "service_details": [
+            { "h2": "Comment se déroule une pose de sol ?", "content": "Diagnostic du support, préparation, pose du revêtement choisi, finitions et nettoyage." },
+            { "h2": "Ce qui est inclus", "content": "Conseil matériaux, pose selon les règles de l'art et réception avec vous." }
+          ],
+          "trust_building": "Données NAP et services issues du profil validé — rien n'est inventé.",
+          "faq": [
+            { "question": "Quels revêtements posez-vous ?", "answer": "Selon devis et usage des pièces — le contenu n'invente jamais de marques ou prix." },
+            { "question": "Le devis est-il gratuit ?", "answer": "Oui, devis écrit avant travaux." }
+          ],
+          "cta": "Demandez votre devis revêtement des sols à Villeurbanne"
+        },
+        "schema": { "type": "Service", "auto_generated": true },
+        "images": {},
+        "internal_links": { "related_services": ["Rénovation", "Maçonnerie"] },
+        "status": "draft"
+      },
+      "schema_jsonld": {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Service",
+            "name": "Revêtement des sols à Villeurbanne",
+            "provider": { "@id": "https://bati-energie-marcel-test.example/#business" },
+            "areaServed": { "@type": "City", "name": "Villeurbanne" }
+          }
+        ]
+      }
+    }
+  ]
+}

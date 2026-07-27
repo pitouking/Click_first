@@ -107,11 +107,11 @@ export function buildPageFixture(req: GeneratePageRequest): PageContent {
         hero: {
           badge_h1: `${category} à ${city}`,
           storybrand_title: `Retrouvez la sérénité chez vous, sans mauvaise surprise`,
-          subtitle: `${name} aide les habitants de ${city} à résoudre leurs urgences et travaux du quotidien.`,
+          subtitle: `${name} aide les habitants de ${city} à réussir leurs projets d'énergie, d'isolation et de rénovation.`,
           cta_label: "Demander un devis gratuit",
         },
-        intro: `${name} intervient à ${city} et alentours pour des interventions soignées, tracées et garanties.`,
-        services_overview: bp.services.slice(0, 6).map((s) => ({
+        intro: `${name} intervient à ${city} et alentours pour des travaux d'énergie, d'isolation, de construction et de rénovation — soignés, tracés et garantis.`,
+        services_overview: bp.services.map((s) => ({
           name: s,
           summary: `Prestation ${s.toLowerCase()} réalisée par une équipe locale à ${city}.`,
         })),

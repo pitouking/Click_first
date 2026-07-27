@@ -1,6 +1,6 @@
 /**
  * End-to-end local demo against wrangler dev:
- * intake (create site) → gbp diagnose → generate Home + Service → publish → write Astro content
+ * intake → gbp diagnose → generate Home + all Service pages → publish → write Astro content
  */
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
@@ -10,25 +10,29 @@ const API = process.env.API_BASE || "http://127.0.0.1:8787";
 const here = dirname(fileURLToPath(import.meta.url));
 const astroGenerated = join(here, "../../astro-template/src/data/generated/site.json");
 
+/** Services fournis par le client — orthographe corrigée (Terrassement, Revêtement des sols). */
+export const MISSING_SERVICES = [
+  "Photovoltaïque",
+  "Isolation",
+  "Maçonnerie",
+  "Rénovation",
+  "Terrassement",
+  "Piscines",
+  "Revêtement des sols",
+] as const;
+
 const business_profile = {
-  business_name: "Plomberie Marcel Test",
-  primary_category: "Plombier",
-  secondary_categories: ["Entreprise de plomberie", "Réparation de chauffe-eau"],
+  business_name: "Bâti Énergie Marcel Test",
+  primary_category: "Construction & Rénovation",
+  secondary_categories: ["Énergie & Isolation", "Maçonnerie", "Terrassement", "Piscines"],
   nap: {
     phone: "+33478000000",
-    streetAddress: "12 rue des Canalisations",
+    streetAddress: "12 rue des Artisans",
     addressLocality: "Villeurbanne",
     postalCode: "69100",
     addressCountry: "FR",
   },
-  services: [
-    "Débouchage",
-    "Recherche de fuite",
-    "Remplacement chauffe-eau",
-    "Installation robinetterie",
-    "Dégât des eaux",
-    "Entretien chaudière",
-  ],
+  services: [...MISSING_SERVICES],
   locations: ["Villeurbanne"],
   hours: [
     {
@@ -37,7 +41,7 @@ const business_profile = {
       closes: "18:00",
     },
   ],
-  url: "https://plomberie-marcel-test.example",
+  url: "https://bati-energie-marcel-test.example",
   priceRange: "$$",
   siret: "12345678900012",
   missing_fields: [],
@@ -56,6 +60,7 @@ async function post<T>(path: string, body: unknown): Promise<T> {
 
 async function main() {
   console.log("API:", API);
+  console.log("Services:", business_profile.services.join(", "));
 
   const health = await fetch(`${API}/health`);
   if (!health.ok) throw new Error("API health check failed — start wrangler dev first");
@@ -91,24 +96,29 @@ async function main() {
   });
   console.log("home page:", home.page_id, home.status);
 
-  const service = await post<Record<string, unknown>>("/generate-page", {
-    site_id: site.site_id,
-    business_profile: { ...business_profile, site_id: site.site_id },
-    page_type: "service",
-    service: "Débouchage",
-  });
-  console.log("service page:", service.page_id, service.slug, service.status);
+  const servicePages: Record<string, unknown>[] = [];
+  for (const serviceName of business_profile.services) {
+    const page = await post<Record<string, unknown>>("/generate-page", {
+      site_id: site.site_id,
+      business_profile: { ...business_profile, site_id: site.site_id },
+      page_type: "service",
+      service: serviceName,
+    });
+    servicePages.push(page);
+    console.log("service page:", page.page_id, page.slug, page.status);
+  }
 
+  const pageIds = [home.page_id, ...servicePages.map((p) => p.page_id)];
   const publish = await post<{
     build_status: string;
     deployed_url: string;
     pages_published: string[];
   }>("/publish-site", {
     site_id: site.site_id,
-    page_ids: [home.page_id, service.page_id],
+    page_ids: pageIds,
     cloudflare_target: "internal",
   });
-  console.log("publish:", publish.build_status, publish.deployed_url);
+  console.log("publish:", publish.build_status, publish.deployed_url, publish.pages_published.length, "pages");
 
   const pagesRes = await fetch(`${API}/sites/${site.site_id}/pages`);
   const pagesJson = (await pagesRes.json()) as {
@@ -121,7 +131,6 @@ async function main() {
     }>;
   };
 
-  // Fetch full page payloads from D1 via regenerate content we already have
   const bundle = {
     site: {
       id: site.site_id,
@@ -142,9 +151,9 @@ async function main() {
         schema_jsonld: home.schema_jsonld,
         status: "published",
       },
-      {
+      ...servicePages.map((service) => ({
         id: String(service.page_id),
-        slug: String(service.slug || "debouchage"),
+        slug: String(service.slug),
         page_type: "service",
         title_tag: String(service.title_tag),
         meta_description: String(service.meta_description),
@@ -152,7 +161,7 @@ async function main() {
         content: service,
         schema_jsonld: service.schema_jsonld,
         status: "published",
-      },
+      })),
     ],
   };
 
@@ -160,7 +169,10 @@ async function main() {
   await writeFile(astroGenerated, JSON.stringify(bundle, null, 2));
   console.log("Wrote Astro content:", astroGenerated);
   console.log("Dashboard:", `http://127.0.0.1:3000/?site_id=${site.site_id}`);
-  console.log("Pages after publish:", pagesJson.pages.map((p) => `${p.page_type}:${p.status}`).join(", "));
+  console.log(
+    "Pages after publish:",
+    pagesJson.pages.map((p) => `${p.page_type}/${p.slug || "home"}:${p.status}`).join(", "),
+  );
 }
 
 main().catch((err) => {

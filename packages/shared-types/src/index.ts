@@ -186,3 +186,5 @@ export interface DashboardPageRow {
   status: PageStatus;
   updated_at: string;
 }
+
+export * from "./service-catalog";
