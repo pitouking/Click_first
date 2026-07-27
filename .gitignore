@@ -1,0 +1,16 @@
+node_modules
+dist
+.astro
+.next
+.wrangler
+.dev.vars
+*.local
+.DS_Store
+.env
+.env.*
+!.env.example
+apps/astro-template/src/data/generated
+apps/astro-template/public/generated
+coverage
+*.log
+.turbo

@@ -1,0 +1,72 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Hero from "../components/Hero.astro";
+import FaqAccordion from "../components/FaqAccordion.astro";
+import { loadSiteBundle, navFromBundle } from "../content/loadSite";
+
+export function getStaticPaths() {
+  const bundle = loadSiteBundle();
+  return bundle.pages
+    .filter((p) => p.page_type === "service")
+    .map((p) => ({
+      params: { slug: p.slug },
+      props: { page: p, bundle },
+    }));
+}
+
+const { page, bundle } = Astro.props;
+const content = page.content as any;
+const address = [
+  bundle.site.nap.streetAddress,
+  bundle.site.nap.postalCode,
+  bundle.site.nap.addressLocality,
+]
+  .filter(Boolean)
+  .join(", ");
+const nav = navFromBundle(bundle);
+const city = bundle.site.nap.addressLocality || "";
+---
+<BaseLayout
+  title={page.title_tag}
+  description={page.meta_description}
+  businessName={bundle.site.business_name}
+  phone={bundle.site.nap.phone}
+  address={address}
+  nav={nav}
+  schema={page.schema_jsonld}
+>
+  <Hero
+    badgeH1={page.h1}
+    storybrandTitle={`Un ${page.h1.split(" à ")[0]?.toLowerCase()} sans mauvaise surprise`}
+    subtitle={content.sections.intro}
+    ctaLabel={content.sections.cta}
+    ctaHref="#contact"
+  />
+
+  <section class="section">
+    <div class="container prose">
+      {content.sections.service_details.map((block: { h2: string; content: string }) => (
+        <section>
+          <h2>{block.h2}</h2>
+          <p>{block.content}</p>
+        </section>
+      ))}
+      <h2>Confiance</h2>
+      <p>{content.sections.trust_building}</p>
+    </div>
+  </section>
+
+  <FaqAccordion items={content.sections.faq} />
+
+  <section class="section" id="contact">
+    <div class="container">
+      <h2>{content.sections.cta}</h2>
+      <p class="muted">Zone : {city}</p>
+      <a class="btn" href={`tel:${bundle.site.nap.phone}`}>Appeler {bundle.site.nap.phone}</a>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .prose { display: grid; gap: calc(var(--spacing-unit) * 3); }
+</style>

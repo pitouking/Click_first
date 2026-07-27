@@ -1,0 +1,21 @@
+# Shared Wrangler config reference for Click_first monorepo.
+# The runnable Worker lives in apps/worker-api (see apps/worker-api/wrangler.toml).
+# D1 migrations: infra/d1/
+
+name = "click-first-api"
+main = "../apps/worker-api/src/index.ts"
+compatibility_date = "2025-07-01"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "click-first-db"
+database_id = "local-click-first-db"
+migrations_dir = "./d1"
+
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "click-first-images"
+
+[vars]
+ENVIRONMENT = "development"

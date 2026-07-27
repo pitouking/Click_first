@@ -1,0 +1,61 @@
+---
+interface Props {
+  businessName: string;
+  phone?: string;
+  nav?: { href: string; label: string }[];
+}
+const { businessName, phone, nav = [] } = Astro.props;
+---
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/">{businessName}</a>
+    <nav aria-label="Navigation principale">
+      <ul>
+        {nav.map((item) => (
+          <li><a href={item.href}>{item.label}</a></li>
+        ))}
+      </ul>
+    </nav>
+    {phone && <a class="header-phone" href={`tel:${phone}`}>{phone}</a>}
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    backdrop-filter: blur(8px);
+    background: color-mix(in srgb, var(--color-surface) 86%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent);
+    z-index: 20;
+  }
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: calc(var(--spacing-unit) * 2);
+    min-height: calc(var(--spacing-unit) * 8);
+  }
+  .brand {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: var(--color-text);
+    text-decoration: none;
+  }
+  nav ul {
+    display: flex;
+    gap: calc(var(--spacing-unit) * 2);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  nav a {
+    text-decoration: none;
+    color: var(--color-text);
+  }
+  .header-phone {
+    font-weight: 700;
+    text-decoration: none;
+    color: var(--color-primary);
+  }
+</style>

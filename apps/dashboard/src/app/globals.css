@@ -1,0 +1,101 @@
+:root {
+  --bg: #0f1419;
+  --panel: #182029;
+  --text: #eef3f7;
+  --muted: #9aabba;
+  --ok: #3dbe8c;
+  --warn: #e2a336;
+  --draft: #6aa6d8;
+  --accent: #e36414;
+  --border: #2a3744;
+  --font: "IBM Plex Sans", "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  font-family: var(--font);
+  background:
+    radial-gradient(circle at 20% 0%, #243246, transparent 40%),
+    var(--bg);
+  color: var(--text);
+}
+
+a { color: inherit; }
+
+main {
+  width: min(960px, calc(100% - 2rem));
+  margin: 2rem auto;
+}
+
+.panel {
+  background: color-mix(in srgb, var(--panel) 92%, black);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+h1 { margin: 0 0 0.35rem; font-size: 1.6rem; }
+.muted { color: var(--muted); }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+th, td {
+  text-align: left;
+  padding: 0.75rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.badge.draft { background: color-mix(in srgb, var(--draft) 25%, transparent); color: #b9d9f3; }
+.badge.published { background: color-mix(in srgb, var(--ok) 25%, transparent); color: #b7f0d4; }
+.badge.a_completer { background: color-mix(in srgb, var(--warn) 25%, transparent); color: #f0d7a0; }
+
+button {
+  border: 0;
+  border-radius: 8px;
+  padding: 0.55rem 0.9rem;
+  background: var(--accent);
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+input {
+  background: #0d131a;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  padding: 0.55rem 0.75rem;
+  min-width: 240px;
+}
+
+.error { color: #ff8f8f; margin-top: 0.75rem; }
+.ok { color: #9be7c4; margin-top: 0.75rem; }

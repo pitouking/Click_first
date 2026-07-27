@@ -1,0 +1,55 @@
+---
+interface Props {
+  badgeH1: string;
+  storybrandTitle: string;
+  subtitle: string;
+  ctaLabel: string;
+  ctaHref?: string;
+}
+const { badgeH1, storybrandTitle, subtitle, ctaLabel, ctaHref = "#contact" } = Astro.props;
+---
+<section class="hero section">
+  <div class="container hero-grid">
+    <div>
+      <h1 class="badge">{badgeH1}</h1>
+      <h2 class="story-title">{storybrandTitle}</h2>
+      <p class="subtitle">{subtitle}</p>
+      <a class="btn" href={ctaHref}>{ctaLabel}</a>
+    </div>
+    <div class="hero-visual" aria-hidden="true"></div>
+  </div>
+</section>
+
+<style>
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: calc(var(--spacing-unit) * 4);
+    align-items: center;
+  }
+  .badge {
+    font-size: 1rem;
+    letter-spacing: 0.02em;
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-unit);
+  }
+  .story-title {
+    font-size: var(--font-size-hero-title);
+    margin-bottom: calc(var(--spacing-unit) * 2);
+  }
+  .subtitle {
+    font-size: 1.125rem;
+    color: var(--color-muted);
+    max-width: 40rem;
+  }
+  .hero-visual {
+    min-height: 280px;
+    border-radius: calc(var(--radius-base) * 1.5);
+    background:
+      linear-gradient(145deg, color-mix(in srgb, var(--color-primary) 70%, transparent), color-mix(in srgb, var(--color-secondary) 65%, transparent)),
+      radial-gradient(circle at 30% 30%, #fff6, transparent 50%);
+  }
+  @media (max-width: 800px) {
+    .hero-grid { grid-template-columns: 1fr; }
+  }
+</style>

@@ -4,19 +4,11 @@
 
 ### Current repository state (read first)
 
-This repository currently contains **only planning/specification documents** — there is
-no application code, no monorepo scaffolding, and no dependency manifests yet:
+Monorepo MVP scaffold is in place (`apps/`, `packages/`, `infra/`). Product contracts remain
+defined by:
 
-- `README.md` — placeholder title only.
-- `claude-code-kickoff-brief.md` — the build brief (French). Describes the mandated
-  monorepo layout, stack, env vars, build order, and the "definition of done".
-- `spec-seo-templates-saas.md` — the detailed product spec and **source of truth** for all
-  data contracts, SEO/JSON-LD schemas, and business rules. Read it in full before writing
-  code; do not improvise data contracts outside it.
-
-Because nothing is scaffolded, there is **no application to build, run, lint, or test yet**.
-An environment setup that "runs the app" is not possible until the monorepo described in
-`claude-code-kickoff-brief.md` is created.
+- `claude-code-kickoff-brief.md` — build order, stack, DoD
+- `spec-seo-templates-saas.md` — data contracts, SEO/JSON-LD, endpoints
 
 ### Intended stack (per the kickoff brief)
 
@@ -72,19 +64,22 @@ index; they are local to the clone (not committed).
 Note: this Cloud Agent session’s built-in MCP catalog may not include vexp; use the CLI
 (`vexp capsule`, `vexp index`, …) here. Desktop Cursor picks up `.cursor/mcp.json`.
 
-### Setup / run once code is scaffolded
+### Setup / run (monorepo scaffolded)
 
-- Install deps from the repo root once a root `package.json`/`pnpm-lock.yaml` exists:
-  `pnpm install`. (The startup update script already runs this, guarded on the manifest
-  existing, so it is a safe no-op today.)
-- Worker API: run locally with `npx wrangler dev` from `apps/worker-api` (or the configured
-  script). D1/R2 bindings come from `wrangler.toml`; use `wrangler d1 migrations apply` for
-  `infra/d1` migrations against a local DB.
-- Astro template: `pnpm --filter astro-template dev` (Astro dev server, default port 4321).
-- Dashboard: `pnpm --filter dashboard dev`.
+- Install: `pnpm install` (also in the startup update script).
+- D1 local migrations: `pnpm db:migrate:local`
+- Worker API: `pnpm dev:api` → `http://127.0.0.1:8787` (`/health`, `/gbp/diagnose`, `/site/extract`, `/generate-page`, `/generate-image`, `/publish-site`).
+- Astro template: `pnpm dev:astro` → `http://127.0.0.1:4321` (fixture plombier by default; generated content under `apps/astro-template/src/data/generated/` after demo:e2e).
+- Dashboard: `pnpm dev:dashboard` → `http://127.0.0.1:3000` (pass `?site_id=`). Auth intended via Cloudflare Access — no app auth in MVP.
+- Demo E2E (API must be up): `pnpm --filter @click-first/worker-api demo:e2e`
+- Without provider API keys, `generateContent` uses deterministic fixtures (still valid for Home + Service + JSON-LD).
 - All provider API keys (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `DEEPSEEK_API_KEY`,
   `FAL_AI_API_KEY`, `CLOUDFLARE_API_TOKEN`) are **Worker secrets only** — never expose them
-  to any frontend bundle. Provide them via Cloud Agent Secrets / `.dev.vars` for local dev.
+  to any frontend bundle. Use `apps/worker-api/.dev.vars` for local wrangler.
+
+### Setup / run once code is scaffolded (legacy note)
+
+The monorepo above is now present. Prefer the commands in the previous section.
 
 ### Notes
 

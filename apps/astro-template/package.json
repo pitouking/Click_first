@@ -1,0 +1,22 @@
+{
+  "name": "@click-first/astro-template",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev --host 0.0.0.0 --port 4321",
+    "build": "astro build",
+    "preview": "astro preview --host 0.0.0.0 --port 4321",
+    "lint": "astro check || tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "node -e \"console.log('astro-template: smoke via build')\""
+  },
+  "dependencies": {
+    "@click-first/shared-types": "workspace:*",
+    "astro": "^5.11.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "typescript": "^5.8.3"
+  }
+}

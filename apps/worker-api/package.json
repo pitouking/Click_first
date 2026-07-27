@@ -1,0 +1,26 @@
+{
+  "name": "@click-first/worker-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --local --persist-to .wrangler/state",
+    "build": "wrangler deploy --dry-run --outdir=dist",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test src/schema/buildJsonLd.test.ts",
+    "db:migrate:local": "wrangler d1 migrations apply click-first-db --local --persist-to .wrangler/state",
+    "demo:seed": "tsx scripts/demo-seed.ts",
+    "demo:e2e": "tsx scripts/demo-e2e.ts"
+  },
+  "dependencies": {
+    "@click-first/shared-types": "workspace:*"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260727.1",
+    "@types/node": "^22.20.1",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3",
+    "wrangler": "^4.24.0"
+  }
+}
