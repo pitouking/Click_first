@@ -50,6 +50,50 @@ type PageDetail = {
 };
 
 const DEFAULT_LOCATIONS = ["Villeurbanne", "Lyon", "Caluire-et-Cuire"];
+const CATALOG_CATEGORIES = Object.keys(SERVICE_CATALOG);
+
+type SiteForm = {
+  business_name: string;
+  primary_category: string;
+  secondary_categories: string;
+  phone: string;
+  streetAddress: string;
+  addressLocality: string;
+  postalCode: string;
+  url: string;
+  services: string;
+  locations: string;
+};
+
+function blankForm(): SiteForm {
+  return {
+    business_name: "",
+    primary_category: CATALOG_CATEGORIES[0] || "",
+    secondary_categories: "",
+    phone: "",
+    streetAddress: "",
+    addressLocality: "",
+    postalCode: "",
+    url: "",
+    services: "",
+    locations: "",
+  };
+}
+
+function exampleForm(): SiteForm {
+  return {
+    business_name: "Bâti Énergie Marcel Test",
+    primary_category: "Construction & Rénovation",
+    secondary_categories: "Énergie & Isolation",
+    phone: "+33478000000",
+    streetAddress: "12 rue des Artisans",
+    addressLocality: "Villeurbanne",
+    postalCode: "69100",
+    url: "https://bati-energie-marcel-test.pages.dev",
+    services: ALL_CATALOG_SERVICES.join("\n"),
+    locations: DEFAULT_LOCATIONS.join("\n"),
+  };
+}
 
 export default function DashboardPage() {
   const [authed, setAuthed] = useState(false);
@@ -73,17 +117,8 @@ export default function DashboardPage() {
   const [editing, setEditing] = useState<PageDetail | null>(null);
   const [editIntro, setEditIntro] = useState("");
 
-  const [form, setForm] = useState({
-    business_name: "Bâti Énergie Marcel Test",
-    primary_category: "Construction & Rénovation",
-    secondary_categories: "Énergie & Isolation",
-    phone: "+33478000000",
-    streetAddress: "12 rue des Artisans",
-    addressLocality: "Villeurbanne",
-    postalCode: "69100",
-    services: ALL_CATALOG_SERVICES.join("\n"),
-    locations: DEFAULT_LOCATIONS.join("\n"),
-  });
+  const [form, setForm] = useState<SiteForm>(() => blankForm());
+  const [alsoGenerate, setAlsoGenerate] = useState(true);
 
   const draftIds = useMemo(
     () => pages.filter((p) => p.status === "draft" || p.status === "a_completer").map((p) => p.id),
@@ -190,18 +225,30 @@ export default function DashboardPage() {
     }
   }
 
+  function startNewSite(prefillExample = false) {
+    setForm(prefillExample ? exampleForm() : blankForm());
+    setAlsoGenerate(true);
+    setDiagnose(null);
+    setError(null);
+    setMessage(null);
+    setTab("onboarding");
+  }
+
   async function onCreateSite() {
     setBusy(true);
     setError(null);
     try {
+      if (!form.business_name.trim()) throw new Error("Le nom de l’entreprise est obligatoire");
       const services = form.services.split("\n").map((s) => s.trim()).filter(Boolean);
       const locations = form.locations.split("\n").map((s) => s.trim()).filter(Boolean);
       const secondary = form.secondary_categories.split(",").map((s) => s.trim()).filter(Boolean);
+      if (!services.length) throw new Error("Ajoutez au moins un service (1 par ligne)");
+      if (!locations.length) throw new Error("Ajoutez au moins une zone / ville (1 par ligne)");
 
       const diagRes = await apiFetch(`/gbp/diagnose`, {
         method: "POST",
         body: JSON.stringify({
-          business_name: form.business_name,
+          business_name: form.business_name.trim(),
           categories: { primary: form.primary_category, secondary },
           services,
           description_length: 200,
@@ -219,29 +266,43 @@ export default function DashboardPage() {
         method: "POST",
         body: JSON.stringify({
           business_profile: {
-            business_name: form.business_name,
+            business_name: form.business_name.trim(),
             primary_category: form.primary_category,
             secondary_categories: secondary,
             nap: {
-              phone: form.phone,
-              streetAddress: form.streetAddress,
-              addressLocality: form.addressLocality,
-              postalCode: form.postalCode,
+              phone: form.phone.trim() || undefined,
+              streetAddress: form.streetAddress.trim() || undefined,
+              addressLocality: form.addressLocality.trim() || undefined,
+              postalCode: form.postalCode.trim() || undefined,
               addressCountry: "FR",
             },
             services,
             locations,
-            url: "https://bati-energie-marcel-test.example",
+            url: form.url.trim() || undefined,
           },
           gbp: true,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "create failed");
-      setSiteId(data.site_id);
-      setMessage(`Site créé ${data.site_id}`);
+      const newId = String(data.site_id);
+      setSiteId(newId);
+      setMessage(`Site créé : ${data.business_name} (${newId})`);
       await loadSites();
-      await loadSite(data.site_id);
+      await loadSite(newId);
+
+      if (alsoGenerate) {
+        setMessage(`Site créé — génération des pages avec ${aiProvider}…`);
+        const matrixRes = await apiFetch(`/generate-matrix`, {
+          method: "POST",
+          body: JSON.stringify({ site_id: newId, include_core_pages: true, ai_provider: aiProvider }),
+        });
+        const matrix = await matrixRes.json();
+        if (!matrixRes.ok) throw new Error(matrix.error || "matrix failed after create");
+        setMessage(`Site créé + ${matrix.generated_count} pages générées (${matrix.ai_provider || aiProvider})`);
+        await loadSite(newId);
+      }
+
       setTab("pages");
     } catch (err) {
       setError(String(err));
@@ -445,8 +506,8 @@ export default function DashboardPage() {
           <button type="button" className={tab === "sites" ? "" : "ghost"} onClick={() => setTab("sites")}>
             Sites
           </button>
-          <button type="button" className={tab === "onboarding" ? "" : "ghost"} onClick={() => setTab("onboarding")}>
-            Onboarding
+          <button type="button" className={tab === "onboarding" ? "" : "ghost"} onClick={() => startNewSite(false)}>
+            Nouveau site
           </button>
           <button type="button" className={tab === "pages" ? "" : "ghost"} onClick={() => setTab("pages")}>
             Pages & corrections
@@ -458,7 +519,12 @@ export default function DashboardPage() {
 
         {tab === "sites" && (
           <section>
-            <h2>Sites</h2>
+            <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+              <h2 style={{ margin: 0 }}>Sites</h2>
+              <button type="button" onClick={() => startNewSite(false)}>
+                + Ajouter un site
+              </button>
+            </div>
             <table>
               <thead>
                 <tr>
@@ -472,7 +538,7 @@ export default function DashboardPage() {
                 {sites.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="muted">
-                      Aucun site — passez par Onboarding.
+                      Aucun site — cliquez sur « Ajouter un site ».
                     </td>
                   </tr>
                 ) : (
@@ -503,33 +569,77 @@ export default function DashboardPage() {
 
         {tab === "onboarding" && (
           <section>
-            <h2>Créer un site (intake GBP)</h2>
+            <h2>Nouveau site</h2>
+            <p className="muted">
+              Remplissez le profil entreprise (NAP, services, zones). Le fournisseur IA sélectionné ci-dessus sera utilisé
+              si vous générez les pages juste après.
+            </p>
+            <div className="row">
+              <button type="button" className="ghost" onClick={() => startNewSite(false)}>
+                Formulaire vide
+              </button>
+              <button type="button" className="ghost" onClick={() => startNewSite(true)}>
+                Préremplir l’exemple démo
+              </button>
+            </div>
             <div className="form-grid">
               <label>
-                Nom
-                <input value={form.business_name} onChange={(e) => setForm({ ...form, business_name: e.target.value })} />
+                Nom de l’entreprise *
+                <input
+                  value={form.business_name}
+                  onChange={(e) => setForm({ ...form, business_name: e.target.value })}
+                  placeholder="Ex. Dupont Rénovation"
+                />
               </label>
               <label>
                 Catégorie primaire
-                <input
+                <select
                   value={form.primary_category}
-                  onChange={(e) => setForm({ ...form, primary_category: e.target.value })}
-                />
+                  onChange={(e) => {
+                    const primary = e.target.value;
+                    const catalogServices = SERVICE_CATALOG[primary as keyof typeof SERVICE_CATALOG] || [];
+                    setForm({
+                      ...form,
+                      primary_category: primary,
+                      services: form.services.trim()
+                        ? form.services
+                        : catalogServices.join("\n"),
+                    });
+                  }}
+                >
+                  {CATALOG_CATEGORIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
               </label>
               <label>
                 Catégories secondaires (virgules)
                 <input
                   value={form.secondary_categories}
                   onChange={(e) => setForm({ ...form, secondary_categories: e.target.value })}
+                  placeholder="Énergie & Isolation"
+                />
+              </label>
+              <label>
+                Site web (URL)
+                <input
+                  value={form.url}
+                  onChange={(e) => setForm({ ...form, url: e.target.value })}
+                  placeholder="https://…"
                 />
               </label>
               <label>
                 Téléphone
-                <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+33…" />
               </label>
               <label>
                 Rue
-                <input value={form.streetAddress} onChange={(e) => setForm({ ...form, streetAddress: e.target.value })} />
+                <input
+                  value={form.streetAddress}
+                  onChange={(e) => setForm({ ...form, streetAddress: e.target.value })}
+                />
               </label>
               <label>
                 Ville
@@ -543,25 +653,38 @@ export default function DashboardPage() {
                 <input value={form.postalCode} onChange={(e) => setForm({ ...form, postalCode: e.target.value })} />
               </label>
               <label className="full">
-                Services (1 par ligne)
+                Services (1 par ligne) *
                 <textarea
                   rows={8}
                   value={form.services}
                   onChange={(e) => setForm({ ...form, services: e.target.value })}
+                  placeholder={"Photovoltaïque\nIsolation\nMaçonnerie"}
                 />
               </label>
               <label className="full">
-                Locations (1 par ligne)
+                Zones / villes (1 par ligne) *
                 <textarea
                   rows={4}
                   value={form.locations}
                   onChange={(e) => setForm({ ...form, locations: e.target.value })}
+                  placeholder={"Villeurbanne\nLyon"}
                 />
+              </label>
+              <label className="full" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={alsoGenerate}
+                  onChange={(e) => setAlsoGenerate(e.target.checked)}
+                />
+                Générer aussi la matrice de pages (services × zones) avec {aiProvider === "openai" ? "ChatGPT" : aiProvider}
               </label>
             </div>
             <div className="row">
               <button type="button" disabled={busy} onClick={() => void onCreateSite()}>
-                {busy ? "Création…" : "Diagnostiquer GBP + créer le site"}
+                {busy ? "Création…" : alsoGenerate ? "Créer le site + générer les pages" : "Créer le site"}
+              </button>
+              <button type="button" className="ghost" disabled={busy} onClick={() => setTab("sites")}>
+                Annuler
               </button>
             </div>
             {diagnose && (
