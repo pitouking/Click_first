@@ -55,7 +55,7 @@ export async function generateContent(
         payload,
         env.OPENAI_API_KEY!,
         "https://api.openai.com/v1/chat/completions",
-        "gpt-4o-mini",
+        "gpt-4o",
       );
     }
   } catch (err) {
@@ -67,6 +67,8 @@ export async function generateContent(
 }
 
 function pickProvider(task: AiTask, env: Env): "anthropic" | "deepseek" | "openai" | "fixture" {
+  // Prefer OpenAI when available (current default provider for this environment).
+  if (env.OPENAI_API_KEY) return "openai";
   if (task === "home_copy" || task === "about_copy") {
     if (env.ANTHROPIC_API_KEY) return "anthropic";
   }
@@ -76,7 +78,6 @@ function pickProvider(task: AiTask, env: Env): "anthropic" | "deepseek" | "opena
   }
   if (task === "gbp_diagnose" || task === "site_extract") {
     if (env.ANTHROPIC_API_KEY) return "anthropic";
-    if (env.OPENAI_API_KEY) return "openai";
   }
   return "fixture";
 }
@@ -362,6 +363,19 @@ async function callOpenAiCompatible(
   url: string,
   model: string,
 ) {
+  const pageType = payload.page_type || "home";
+  const example = buildPageFixture({
+    business_profile: payload.business_profile || {
+      business_name: "Example",
+      nap: {},
+      services: [],
+      locations: [],
+    },
+    page_type: pageType as GeneratePageRequest["page_type"],
+    service: payload.service,
+    location: payload.location,
+  });
+
   const res = await fetch(url, {
     method: "POST",
     headers: {
@@ -372,12 +386,28 @@ async function callOpenAiCompatible(
       model,
       response_format: { type: "json_object" },
       messages: [
-        { role: "system", content: "Return only JSON matching the page contract." },
-        { role: "user", content: `task=${task} payload=${JSON.stringify(payload)}` },
+        {
+          role: "system",
+          content:
+            "Tu génères du contenu SEO local en français. Réponds UNIQUEMENT avec un JSON valide qui respecte exactement le contrat de page fourni (mêmes clés). N'invente jamais de NAP, avis, notes, prix chiffrés ou certifications absents du profil.",
+        },
+        {
+          role: "user",
+          content: JSON.stringify({
+            task,
+            instructions:
+              "Remplis le contrat JSON ci-dessous avec une copy originale et locale. Garde page_type, slug pattern, schema.auto_generated=true, status=draft. Améliore title_tag, meta_description, h1 et sections.",
+            contract_example: example,
+            payload,
+          }),
+        },
       ],
     }),
   });
-  if (!res.ok) throw new Error(`OpenAI-compatible ${res.status}`);
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`OpenAI-compatible ${res.status}: ${errText.slice(0, 200)}`);
+  }
   const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
   return JSON.parse(data.choices?.[0]?.message?.content || "{}");
 }
