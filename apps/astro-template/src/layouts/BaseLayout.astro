@@ -1,0 +1,49 @@
+---
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import SchemaScript from "../components/SchemaScript.astro";
+import "../styles/tokens.css";
+
+interface Props {
+  title: string;
+  description: string;
+  businessName: string;
+  phone?: string;
+  address?: string;
+  nav?: { href: string; label: string }[];
+  schema?: Record<string, unknown>;
+  lang?: string;
+}
+const {
+  title,
+  description,
+  businessName,
+  phone,
+  address,
+  nav = [],
+  schema,
+  lang = "fr",
+} = Astro.props;
+---
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="robots" content="index,follow" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
+    {schema && <SchemaScript data={schema} />}
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Aller au contenu principal</a>
+    <Header businessName={businessName} phone={phone} nav={nav} />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer businessName={businessName} address={address} phone={phone} />
+  </body>
+</html>

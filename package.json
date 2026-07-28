@@ -1,0 +1,26 @@
+{
+  "name": "click-first",
+  "private": true,
+  "packageManager": "pnpm@10.33.3",
+  "scripts": {
+    "dev:api": "pnpm --filter @click-first/worker-api dev",
+    "dev:astro": "pnpm --filter @click-first/astro-template dev",
+    "dev:dashboard": "pnpm --filter @click-first/dashboard dev",
+    "build": "pnpm -r run build",
+    "lint": "pnpm -r run lint",
+    "test": "pnpm -r run test",
+    "typecheck": "pnpm -r run typecheck",
+    "db:migrate:local": "pnpm --filter @click-first/worker-api db:migrate:local",
+    "demo:seed": "pnpm --filter @click-first/worker-api demo:seed"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp",
+      "workerd"
+    ]
+  }
+}

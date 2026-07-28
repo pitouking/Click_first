@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "vexp": {
+      "command": "/home/ubuntu/.nvm/versions/node/v22.22.2/bin/node",
+      "args": [
+        "/home/ubuntu/.nvm/versions/node/v22.22.2/lib/node_modules/vexp-cli/mcp/mcp-server.cjs"
+      ],
+      "env": {
+        "VEXP_WORKSPACE": "/workspace",
+        "PATH": "/home/ubuntu/.nvm/versions/node/v22.22.2/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      }
+    }
+  }
+}

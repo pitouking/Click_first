@@ -1,0 +1,147 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Hero from "../components/Hero.astro";
+import ServiceCard from "../components/ServiceCard.astro";
+import FaqAccordion from "../components/FaqAccordion.astro";
+import { loadSiteBundle, navFromBundle } from "../content/loadSite";
+import { slugifyLabel } from "../lib/slug";
+
+export function getStaticPaths() {
+  const bundle = loadSiteBundle();
+  return bundle.pages
+    .filter((p) => p.page_type !== "home" && p.slug)
+    .map((p) => ({
+      params: { slug: p.slug },
+      props: { page: p, bundle },
+    }));
+}
+
+const { page, bundle } = Astro.props;
+const content = page.content as any;
+const sections = content.sections || {};
+const address = [
+  bundle.site.nap.streetAddress,
+  bundle.site.nap.postalCode,
+  bundle.site.nap.addressLocality,
+]
+  .filter(Boolean)
+  .join(", ");
+const nav = navFromBundle(bundle);
+const city = bundle.site.nap.addressLocality || "";
+const intro = sections.intro || page.meta_description;
+const cta = sections.cta || "Nous contacter";
+const faq = sections.faq || [];
+const details = sections.service_details || [];
+const cards =
+  sections.services_in_category ||
+  sections.services_available ||
+  [];
+---
+<BaseLayout
+  title={page.title_tag}
+  description={page.meta_description}
+  businessName={bundle.site.business_name}
+  phone={bundle.site.nap.phone}
+  address={address}
+  nav={nav}
+  schema={page.schema_jsonld}
+>
+  <Hero
+    badgeH1={page.h1}
+    storybrandTitle={
+      page.page_type === "about"
+        ? `L'histoire de ${bundle.site.business_name}`
+        : page.page_type === "contact"
+          ? "Parlons de votre projet"
+          : `Un accompagnement local sans mauvaise surprise`
+    }
+    subtitle={intro}
+    ctaLabel={cta}
+    ctaHref="#contact"
+  />
+
+  <section class="section">
+    <div class="container prose">
+      {page.page_type === "about" && (
+        <>
+          <h2>Notre histoire</h2>
+          <p>{sections.story}</p>
+          {sections.values?.length > 0 && (
+            <>
+              <h2>Nos engagements</h2>
+              <ul>
+                {sections.values.map((v: string) => <li>{v}</li>)}
+              </ul>
+            </>
+          )}
+        </>
+      )}
+
+      {page.page_type === "contact" && (
+        <>
+          <h2>Nous joindre</h2>
+          <p>{sections.how_to_reach}</p>
+          <h2>Zone d'intervention</h2>
+          <p>{sections.service_area}</p>
+        </>
+      )}
+
+      {page.page_type === "location" && sections.local_context && (
+        <>
+          <h2>Contexte local</h2>
+          <p>{sections.local_context}</p>
+        </>
+      )}
+
+      {details.map((block: { h2: string; content: string }) => (
+        <section>
+          <h2>{block.h2}</h2>
+          <p>{block.content}</p>
+        </section>
+      ))}
+
+      {cards.length > 0 && (
+        <>
+          <h2>Prestations</h2>
+          <div class="cards">
+            {cards.map((s: { name: string; summary: string }) => (
+              <ServiceCard
+                name={s.name}
+                summary={s.summary}
+                href={`/${slugifyLabel(s.name)}/`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+
+      {sections.trust_building && (
+        <>
+          <h2>Confiance</h2>
+          <p>{sections.trust_building}</p>
+        </>
+      )}
+    </div>
+  </section>
+
+  {faq.length > 0 && <FaqAccordion items={faq} />}
+
+  <section class="section" id="contact">
+    <div class="container">
+      <h2>{cta}</h2>
+      {city && <p class="muted">Zone de référence : {city}</p>}
+      {bundle.site.nap.phone && (
+        <a class="btn" href={`tel:${bundle.site.nap.phone}`}>Appeler {bundle.site.nap.phone}</a>
+      )}
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .prose { display: grid; gap: calc(var(--spacing-unit) * 3); }
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: calc(var(--spacing-unit) * 2);
+  }
+</style>

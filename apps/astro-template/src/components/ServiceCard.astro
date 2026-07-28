@@ -1,0 +1,22 @@
+---
+interface Props {
+  name: string;
+  summary: string;
+  href?: string;
+}
+const { name, summary, href } = Astro.props;
+---
+<article class="service-card">
+  <h3>{href ? <a href={href}>{name}</a> : name}</h3>
+  <p class="muted">{summary}</p>
+</article>
+
+<style>
+  .service-card {
+    padding: calc(var(--spacing-unit) * 3);
+    background: var(--color-surface);
+    border-radius: var(--radius-base);
+    border: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+  }
+  .service-card a { text-decoration: none; color: inherit; }
+</style>

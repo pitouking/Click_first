@@ -1,0 +1,28 @@
+---
+interface Props {
+  businessName: string;
+  address?: string;
+  phone?: string;
+}
+const { businessName, address, phone } = Astro.props;
+---
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <p><strong>{businessName}</strong></p>
+    {address && <p class="muted">{address}</p>}
+    {phone && <p><a href={`tel:${phone}`}>{phone}</a></p>}
+    <p class="muted">NAP et avis : uniquement des données validées — jamais inventées.</p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    margin-top: calc(var(--spacing-unit) * 8);
+    padding-block: calc(var(--spacing-unit) * 5);
+    background: color-mix(in srgb, var(--color-primary) 92%, black);
+    color: #f5f5f5;
+  }
+  .site-footer a { color: #fff; }
+  .footer-inner { display: grid; gap: var(--spacing-unit); }
+  .muted { opacity: 0.85; }
+</style>

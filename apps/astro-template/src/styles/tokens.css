@@ -1,0 +1,101 @@
+:root {
+  /* Injected per-site via --site-* at build; defaults for Moderne preset */
+  --color-primary: var(--site-primary, #0f4c5c);
+  --color-secondary: var(--site-secondary, #e36414);
+  --color-accent: var(--site-accent, #1a7a6d);
+  --color-bg: var(--site-bg, #f7f3ee);
+  --color-surface: var(--site-surface, #ffffff);
+  --color-text: var(--site-text, #1b1b1b);
+  --color-muted: var(--site-muted, #5c5c5c);
+  --font-heading: var(--site-font-heading, "Fraunces", "Georgia", serif);
+  --font-body: var(--site-font-body, "Source Sans 3", "Segoe UI", sans-serif);
+  --font-size-hero-title: clamp(2.2rem, 4vw, 3.4rem);
+  --spacing-unit: 8px;
+  --radius-base: 10px;
+  --max-width: 1120px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background:
+    radial-gradient(circle at 10% 0%, color-mix(in srgb, var(--color-secondary) 18%, transparent), transparent 42%),
+    radial-gradient(circle at 90% 10%, color-mix(in srgb, var(--color-primary) 16%, transparent), transparent 40%),
+    var(--color-bg);
+  line-height: 1.55;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-heading);
+  line-height: 1.15;
+  margin: 0 0 calc(var(--spacing-unit) * 2);
+}
+
+a {
+  color: var(--color-primary);
+}
+
+.skip-link {
+  position: absolute;
+  left: -999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.skip-link:focus {
+  left: var(--spacing-unit);
+  top: var(--spacing-unit);
+  width: auto;
+  height: auto;
+  padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 2);
+  background: var(--color-surface);
+  z-index: 1000;
+}
+
+.container {
+  width: min(100% - calc(var(--spacing-unit) * 4), var(--max-width));
+  margin-inline: auto;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-unit);
+  padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 2.5);
+  border-radius: var(--radius-base);
+  border: 0;
+  background: var(--color-secondary);
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 50%, white);
+  outline-offset: 2px;
+}
+
+.section {
+  padding-block: calc(var(--spacing-unit) * 7);
+}
+
+.muted {
+  color: var(--color-muted);
+}

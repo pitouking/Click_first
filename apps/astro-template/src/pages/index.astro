@@ -1,0 +1,83 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Hero from "../components/Hero.astro";
+import ServiceCard from "../components/ServiceCard.astro";
+import FaqAccordion from "../components/FaqAccordion.astro";
+import { loadSiteBundle, navFromBundle } from "../content/loadSite";
+import { slugifyLabel } from "../lib/slug";
+
+const bundle = loadSiteBundle();
+const home = bundle.pages.find((p) => p.page_type === "home")!;
+const content = home.content as any;
+const nav = [
+  ...navFromBundle(bundle).map((n) => ({
+    ...n,
+    href: n.href,
+  })),
+];
+const address = [
+  bundle.site.nap.streetAddress,
+  bundle.site.nap.postalCode,
+  bundle.site.nap.addressLocality,
+]
+  .filter(Boolean)
+  .join(", ");
+---
+<BaseLayout
+  title={home.title_tag}
+  description={home.meta_description}
+  businessName={bundle.site.business_name}
+  phone={bundle.site.nap.phone}
+  address={address}
+  nav={nav}
+  schema={home.schema_jsonld}
+>
+  <Hero
+    badgeH1={content.sections.hero.badge_h1}
+    storybrandTitle={content.sections.hero.storybrand_title}
+    subtitle={content.sections.hero.subtitle}
+    ctaLabel={content.sections.hero.cta_label}
+    ctaHref="#contact"
+  />
+
+  <section class="section">
+    <div class="container">
+      <h2>Nos interventions</h2>
+      <p class="muted">{content.sections.intro}</p>
+      <div class="cards">
+        {content.sections.services_overview.map((s: { name: string; summary: string }) => (
+          <ServiceCard
+            name={s.name}
+            summary={s.summary}
+            href={`/${slugifyLabel(s.name)}/`}
+          />
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <h2>Confiance</h2>
+      <p>{content.sections.trust_building}</p>
+    </div>
+  </section>
+
+  <FaqAccordion items={content.sections.faq} />
+
+  <section class="section" id="contact">
+    <div class="container">
+      <h2>{content.sections.cta}</h2>
+      <a class="btn" href={`tel:${bundle.site.nap.phone}`}>Appeler {bundle.site.nap.phone}</a>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: calc(var(--spacing-unit) * 2);
+    margin-top: calc(var(--spacing-unit) * 3);
+  }
+</style>
