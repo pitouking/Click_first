@@ -1,6 +1,7 @@
 import type { Env } from "./env";
 import { json, noContent, requireToolAccess } from "./http";
 import {
+  handleAiStatus,
   handleCreateSite,
   handleExportSite,
   handleGbpDiagnose,
@@ -31,6 +32,9 @@ export default {
     if (denied) return denied;
 
     try {
+      if (request.method === "GET" && url.pathname === "/ai/status") {
+        return handleAiStatus(env);
+      }
       if (request.method === "POST" && url.pathname === "/gbp/diagnose") {
         return handleGbpDiagnose(request, env);
       }

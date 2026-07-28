@@ -7,30 +7,34 @@ import type {
   PublishSiteRequest,
   SiteExtractRequest,
 } from "@click-first/shared-types";
-import { buildPageFixture, generateContent, slugify } from "../ai/generateContent";
+import { buildPageFixture, generateContent, listAiProviders, slugify } from "../ai/generateContent";
 import type { Env } from "../env";
 import { diagnoseGbp } from "../gbp/diagnose";
 import { id, json, readJson } from "../http";
 import { buildJsonLd } from "../schema/buildJsonLd";
 import { extractSite } from "../site/extract";
 
+export async function handleAiStatus(env: Env): Promise<Response> {
+  return json(listAiProviders(env));
+}
+
 export async function handleGbpDiagnose(request: Request, env: Env): Promise<Response> {
-  const body = await readJson<GbpDiagnoseRequest>(request);
+  const body = await readJson<GbpDiagnoseRequest & { ai_provider?: string }>(request);
   const result = diagnoseGbp(body);
   // Optional AI enrichment hook (never invents scores — diagnoseGbp is source of truth)
-  await generateContent("gbp_diagnose", { raw: body }, env);
+  await generateContent("gbp_diagnose", { raw: body }, env, { provider: body.ai_provider });
   return json(result);
 }
 
 export async function handleSiteExtract(request: Request, env: Env): Promise<Response> {
-  const body = await readJson<SiteExtractRequest>(request);
+  const body = await readJson<SiteExtractRequest & { ai_provider?: string }>(request);
   const result = await extractSite(body);
-  await generateContent("site_extract", { raw: body }, env);
+  await generateContent("site_extract", { raw: body }, env, { provider: body.ai_provider });
   return json(result);
 }
 
 export async function handleGeneratePage(request: Request, env: Env): Promise<Response> {
-  const body = await readJson<GeneratePageRequest>(request);
+  const body = await readJson<GeneratePageRequest & { ai_provider?: string }>(request);
   if (!body.business_profile?.business_name) {
     return json({ error: "business_profile.business_name required" }, 400);
   }
@@ -63,6 +67,7 @@ export async function handleGeneratePage(request: Request, env: Env): Promise<Re
         location: body.location,
       },
       env,
+      { provider: body.ai_provider },
     )) as PageContent;
 
     // Guarantee fixture path for category/contact even if provider returns a stub
@@ -626,6 +631,7 @@ export async function handleGenerateMatrix(request: Request, env: Env): Promise<
     services?: string[];
     locations?: string[];
     include_core_pages?: boolean;
+    ai_provider?: string;
   }>(request);
   if (!body.site_id) return json({ error: "site_id required" }, 400);
 
@@ -659,6 +665,7 @@ export async function handleGenerateMatrix(request: Request, env: Env): Promise<
   };
 
   const created: { page_id: string; page_type: string; slug: string; service?: string; location?: string }[] = [];
+  const aiProvider = body.ai_provider || undefined;
 
   async function generateOne(
     page_type: GeneratePageRequest["page_type"],
@@ -674,6 +681,7 @@ export async function handleGenerateMatrix(request: Request, env: Env): Promise<
         page_type,
         service: service ?? null,
         location: location ?? null,
+        ai_provider: aiProvider,
       }),
     });
     const res = await handleGeneratePage(fakeReq, env);
@@ -713,6 +721,7 @@ export async function handleGenerateMatrix(request: Request, env: Env): Promise<
   return json({
     site_id: body.site_id,
     generated_count: created.length,
+    ai_provider: aiProvider || listAiProviders(env).default,
     pages: created,
   });
 }

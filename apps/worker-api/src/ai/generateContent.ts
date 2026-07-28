@@ -12,12 +12,19 @@ import type {
 } from "@click-first/shared-types";
 import type { Env } from "../env";
 
+export type AiProviderId = "openai" | "deepseek" | "anthropic" | "auto";
+
 export interface GenerateContentPayload {
   business_profile?: BusinessProfile;
   page_type?: string;
   service?: string | null;
   location?: string | null;
   raw?: unknown;
+}
+
+export interface GenerateContentOptions {
+  /** Explicit provider from dashboard / API body. */
+  provider?: AiProviderId | string | null;
 }
 
 /**
@@ -28,14 +35,14 @@ export async function generateContent(
   task: AiTask,
   payload: GenerateContentPayload,
   env: Env,
+  options: GenerateContentOptions = {},
 ): Promise<unknown> {
-  const provider = pickProvider(task, env);
+  const provider = pickProvider(task, env, options.provider);
 
   if (provider === "fixture") {
     return fixtureContent(task, payload);
   }
 
-  // Provider hooks — structured output only. Real HTTP calls when keys exist.
   try {
     if (provider === "anthropic") {
       return await callAnthropic(task, payload, env.ANTHROPIC_API_KEY!);
@@ -55,7 +62,7 @@ export async function generateContent(
         payload,
         env.OPENAI_API_KEY!,
         "https://api.openai.com/v1/chat/completions",
-        "gpt-4o",
+        env.OPENAI_MODEL?.trim() || "gpt-4o",
       );
     }
   } catch (err) {
@@ -66,19 +73,61 @@ export async function generateContent(
   return fixtureContent(task, payload);
 }
 
-function pickProvider(task: AiTask, env: Env): "anthropic" | "deepseek" | "openai" | "fixture" {
-  // Prefer DeepSeek when available (cost-efficient default for this environment).
-  if (env.DEEPSEEK_API_KEY) return "deepseek";
-  if (env.OPENAI_API_KEY) return "openai";
-  if (task === "home_copy" || task === "about_copy") {
-    if (env.ANTHROPIC_API_KEY) return "anthropic";
+export function listAiProviders(env: Env) {
+  return {
+    default: normalizeProvider(env.AI_PROVIDER) || "auto",
+    available: {
+      openai: Boolean(env.OPENAI_API_KEY),
+      deepseek: Boolean(env.DEEPSEEK_API_KEY),
+      anthropic: Boolean(env.ANTHROPIC_API_KEY),
+    },
+    openai_model: env.OPENAI_MODEL?.trim() || "gpt-4o",
+  };
+}
+
+function normalizeProvider(value?: string | null): AiProviderId | null {
+  const v = (value || "").trim().toLowerCase();
+  if (v === "openai" || v === "chatgpt" || v === "gpt") return "openai";
+  if (v === "deepseek") return "deepseek";
+  if (v === "anthropic" || v === "claude") return "anthropic";
+  if (v === "auto") return "auto";
+  return null;
+}
+
+function hasKey(provider: Exclude<AiProviderId, "auto">, env: Env): boolean {
+  if (provider === "openai") return Boolean(env.OPENAI_API_KEY);
+  if (provider === "deepseek") return Boolean(env.DEEPSEEK_API_KEY);
+  return Boolean(env.ANTHROPIC_API_KEY);
+}
+
+function pickProvider(
+  task: AiTask,
+  env: Env,
+  preferred?: string | null,
+): "anthropic" | "deepseek" | "openai" | "fixture" {
+  const fromRequest = normalizeProvider(preferred);
+  const fromEnv = normalizeProvider(env.AI_PROVIDER);
+
+  const tryOrder: Array<"openai" | "deepseek" | "anthropic"> = [];
+  if (fromRequest && fromRequest !== "auto") tryOrder.push(fromRequest);
+  else if (fromEnv && fromEnv !== "auto") tryOrder.push(fromEnv);
+  else {
+    // Auto: prefer ChatGPT when available, then DeepSeek, then Claude.
+    tryOrder.push("openai", "deepseek", "anthropic");
   }
-  if (task === "service_copy" || task === "location_copy") {
-    if (env.ANTHROPIC_API_KEY) return "anthropic";
+
+  for (const p of tryOrder) {
+    if (hasKey(p, env)) return p;
   }
-  if (task === "gbp_diagnose" || task === "site_extract") {
-    if (env.ANTHROPIC_API_KEY) return "anthropic";
+
+  // If an explicit provider was requested but key missing, still try others before fixture.
+  if ((fromRequest && fromRequest !== "auto") || (fromEnv && fromEnv !== "auto")) {
+    for (const p of ["openai", "deepseek", "anthropic"] as const) {
+      if (!tryOrder.includes(p) && hasKey(p, env)) return p;
+    }
   }
+
+  void task;
   return "fixture";
 }
 

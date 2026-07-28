@@ -6,6 +6,10 @@ export interface Env {
   ASTRO_CONTENT_DIR?: string;
   /** Shared secret for dashboard/API access (Bearer). */
   TOOL_ACCESS_TOKEN?: string;
+  /** Default AI provider: openai | deepseek | anthropic | auto */
+  AI_PROVIDER?: string;
+  /** OpenAI model id (default gpt-4o) */
+  OPENAI_MODEL?: string;
   ANTHROPIC_API_KEY?: string;
   OPENAI_API_KEY?: string;
   DEEPSEEK_API_KEY?: string;

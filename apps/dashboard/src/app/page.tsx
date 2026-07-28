@@ -55,6 +55,12 @@ export default function DashboardPage() {
   const [authed, setAuthed] = useState(false);
   const [tokenInput, setTokenInput] = useState("");
   const [tab, setTab] = useState<"sites" | "onboarding" | "pages">("sites");
+  const [aiProvider, setAiProvider] = useState<"auto" | "openai" | "deepseek" | "anthropic">("openai");
+  const [aiStatus, setAiStatus] = useState<{
+    default: string;
+    available: { openai: boolean; deepseek: boolean; anthropic: boolean };
+    openai_model: string;
+  } | null>(null);
   const [sites, setSites] = useState<SiteRow[]>([]);
   const [siteId, setSiteId] = useState("");
   const [details, setDetails] = useState<SiteDetails | null>(null);
@@ -134,6 +140,13 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
+    const saved = window.localStorage.getItem("click_first_ai_provider");
+    if (saved === "openai" || saved === "deepseek" || saved === "anthropic" || saved === "auto") {
+      setAiProvider(saved);
+    }
+  }, []);
+
+  useEffect(() => {
     const existing = getToolToken();
     if (!existing) return;
     setTokenInput(existing);
@@ -142,6 +155,8 @@ export default function DashboardPage() {
         if (!res.ok) throw new Error(String(res.status));
         setAuthed(true);
         await loadSites();
+        const statusRes = await apiFetch("/ai/status");
+        if (statusRes.ok) setAiStatus(await statusRes.json());
         const params = new URLSearchParams(window.location.search);
         const initial = params.get("site_id") || window.localStorage.getItem("click_first_site_id") || "";
         if (initial) {
@@ -166,6 +181,8 @@ export default function DashboardPage() {
       setAuthed(true);
       setMessage(`Connecté à ${API_BASE}`);
       await loadSites();
+      const statusRes = await apiFetch("/ai/status");
+      if (statusRes.ok) setAiStatus(await statusRes.json());
     } catch (err) {
       clearToolToken();
       setAuthed(false);
@@ -192,6 +209,7 @@ export default function DashboardPage() {
           attributes_completed: false,
           hours_provided: true,
           qa_count: 1,
+          ai_provider: aiProvider,
         }),
       });
       const diag = (await diagRes.json()) as GbpDiagnoseResponse;
@@ -256,11 +274,11 @@ export default function DashboardPage() {
     try {
       const res = await apiFetch(`/generate-matrix`, {
         method: "POST",
-        body: JSON.stringify({ site_id: siteId, include_core_pages: true }),
+        body: JSON.stringify({ site_id: siteId, include_core_pages: true, ai_provider: aiProvider }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "matrix failed");
-      setMessage(`Matrice: ${data.generated_count} pages générées`);
+      setMessage(`Matrice: ${data.generated_count} pages · IA ${data.ai_provider || aiProvider}`);
       await loadSite(siteId);
     } catch (err) {
       setError(String(err));
@@ -391,6 +409,37 @@ export default function DashboardPage() {
             Déconnexion
           </button>
         </p>
+
+        <div className="row" style={{ alignItems: "center", gap: 12 }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, margin: 0 }}>
+            Fournisseur IA
+            <select
+              value={aiProvider}
+              onChange={(e) => {
+                const v = e.target.value as typeof aiProvider;
+                setAiProvider(v);
+                window.localStorage.setItem("click_first_ai_provider", v);
+              }}
+              aria-label="Fournisseur IA"
+            >
+              <option value="openai" disabled={aiStatus ? !aiStatus.available.openai : false}>
+                ChatGPT (OpenAI){aiStatus && !aiStatus.available.openai ? " — clé absente" : ""}
+              </option>
+              <option value="deepseek" disabled={aiStatus ? !aiStatus.available.deepseek : false}>
+                DeepSeek{aiStatus && !aiStatus.available.deepseek ? " — clé absente" : ""}
+              </option>
+              <option value="anthropic" disabled={aiStatus ? !aiStatus.available.anthropic : false}>
+                Claude (Anthropic){aiStatus && !aiStatus.available.anthropic ? " — clé absente" : ""}
+              </option>
+              <option value="auto">Auto</option>
+            </select>
+          </label>
+          {aiStatus && (
+            <span className="muted">
+              modèle OpenAI: {aiStatus.openai_model}
+            </span>
+          )}
+        </div>
 
         <div className="row">
           <button type="button" className={tab === "sites" ? "" : "ghost"} onClick={() => setTab("sites")}>

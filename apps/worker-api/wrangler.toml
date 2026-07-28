@@ -13,3 +13,5 @@ migrations_dir = "../../infra/d1"
 [vars]
 ENVIRONMENT = "production"
 ASTRO_CONTENT_DIR = "../../astro-template/src/content/generated"
+AI_PROVIDER = "openai"
+OPENAI_MODEL = "gpt-4o"
