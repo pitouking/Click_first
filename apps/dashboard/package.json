@@ -6,6 +6,7 @@
     "dev": "next dev -H 0.0.0.0 -p 3000",
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p 3000",
+    "deploy:pages": "wrangler pages deploy out --project-name=click-first-dashboard --commit-dirty=true --branch=main",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "test": "node -e \"console.log('dashboard: no unit tests yet')\""

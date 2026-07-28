@@ -1,5 +1,5 @@
 import type { Env } from "./env";
-import { json, noContent } from "./http";
+import { json, noContent, requireToolAccess } from "./http";
 import {
   handleCreateSite,
   handleExportSite,
@@ -7,12 +7,14 @@ import {
   handleGenerateImage,
   handleGenerateMatrix,
   handleGeneratePage,
+  handleGetPage,
   handleGetSite,
   handleListPages,
   handleListSites,
   handlePublishSite,
   handleSiteExtract,
   handleSyncGbp,
+  handleUpdatePage,
 } from "./routes/handlers";
 
 export default {
@@ -21,11 +23,14 @@ export default {
 
     if (request.method === "OPTIONS") return noContent();
 
-    try {
-      if (request.method === "GET" && url.pathname === "/health") {
-        return json({ ok: true, service: "click-first-api", env: env.ENVIRONMENT });
-      }
+    if (request.method === "GET" && url.pathname === "/health") {
+      return json({ ok: true, service: "click-first-api", env: env.ENVIRONMENT });
+    }
 
+    const denied = requireToolAccess(request, env);
+    if (denied) return denied;
+
+    try {
       if (request.method === "POST" && url.pathname === "/gbp/diagnose") {
         return handleGbpDiagnose(request, env);
       }
@@ -50,6 +55,15 @@ export default {
       }
       if (request.method === "POST" && url.pathname === "/sites") {
         return handleCreateSite(request, env);
+      }
+
+      const pageMatch = url.pathname.match(/^\/pages\/([^/]+)$/);
+      if (pageMatch) {
+        const pageId = pageMatch[1]!;
+        if (request.method === "GET") return handleGetPage(env, pageId);
+        if (request.method === "PUT" || request.method === "PATCH") {
+          return handleUpdatePage(request, env, pageId);
+        }
       }
 
       const siteMatch = url.pathname.match(/^\/sites\/([^/]+)(?:\/(pages|sync-gbp|export))?$/);

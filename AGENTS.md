@@ -82,7 +82,29 @@ Note: this Cloud Agent session’s built-in MCP catalog may not include vexp; us
 
 The monorepo above is now present. Prefer the commands in the previous section.
 
+### Deployed tool (Monsieur Click Cloudflare account)
+
+Production URLs (account `d6ea7833b7415d26c328c64195a46352`):
+
+- **Dashboard:** https://click-first-dashboard.pages.dev/ — enter `TOOL_ACCESS_TOKEN` (Bearer) to unlock
+- **API:** https://click-first-api.pages.dev/ — `/health` public; all other routes need `Authorization: Bearer <TOOL_ACCESS_TOKEN>`
+- **Demo customer site:** https://bati-energie-marcel-test.pages.dev/
+
+API is deployed as **Pages Advanced Mode** (`_worker.js`) via
+`pnpm --filter @click-first/worker-api deploy:pages-api`, because the current API token can
+manage Pages/D1 but **not** Workers Scripts (`wrangler deploy` → auth 10000). Prefer adding
+Workers Scripts:Edit to the token later, then use `wrangler deploy` to `*.workers.dev`.
+
+Dashboard static export: `NEXT_PUBLIC_API_BASE=https://click-first-api.pages.dev pnpm --filter @click-first/dashboard build`
+then `wrangler pages deploy out --project-name=click-first-dashboard --branch=main`.
+
+Remote D1: `click-first-db` (`c456106a-46ca-478e-b8b1-9e5d6b084ae5`). R2 is **not** enabled on
+the account yet — image/publish handlers skip R2 when `IMAGES` is unbound.
+
+Page corrections: `GET/PATCH /pages/:id` (title, meta, h1, intro/sections, status).
+
 ### Notes
 
 - Prefer `pnpm` for the workspace to match the intended monorepo tooling.
 - `npx wrangler` works without a global install; there is no need to `npm i -g wrangler`.
+- Never commit `TOOL_ACCESS_TOKEN` or provider keys; keep them in `.dev.vars` / Pages secrets.

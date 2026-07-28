@@ -2,17 +2,14 @@ name = "click-first-api"
 main = "src/index.ts"
 compatibility_date = "2025-07-01"
 compatibility_flags = ["nodejs_compat"]
+account_id = "d6ea7833b7415d26c328c64195a46352"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "click-first-db"
-database_id = "local-click-first-db"
+database_id = "c456106a-46ca-478e-b8b1-9e5d6b084ae5"
 migrations_dir = "../../infra/d1"
 
-[[r2_buckets]]
-binding = "IMAGES"
-bucket_name = "click-first-images"
-
 [vars]
-ENVIRONMENT = "development"
+ENVIRONMENT = "production"
 ASTRO_CONTENT_DIR = "../../astro-template/src/content/generated"

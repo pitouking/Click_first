@@ -1,5 +1,8 @@
 node_modules
 dist
+dist-worker
+pages-static
+out
 .astro
 .next
 .wrangler

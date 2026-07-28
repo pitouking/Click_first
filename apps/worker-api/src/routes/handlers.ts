@@ -145,10 +145,12 @@ export async function handleGenerateImage(request: Request, env: Env): Promise<R
 
   if (!env.FAL_AI_API_KEY) {
     const key = `${body.site_id}/${body.slot}-${Date.now()}.txt`;
-    await env.IMAGES.put(key, `placeholder:${prompt}`, {
-      customMetadata: { provider: "fixture", slot: body.slot },
-    });
-    return json({ image_url: `r2://${key}`, storage: "r2", provider: "fixture" });
+    if (env.IMAGES) {
+      await env.IMAGES.put(key, `placeholder:${prompt}`, {
+        customMetadata: { provider: "fixture", slot: body.slot },
+      });
+    }
+    return json({ image_url: `r2://${key}`, storage: env.IMAGES ? "r2" : "none", provider: "fixture" });
   }
 
   const falRes = await fetch("https://fal.run/fal-ai/flux/schnell", {
@@ -173,19 +175,21 @@ export async function handleGenerateImage(request: Request, env: Env): Promise<R
   const imageUrl = falData.images?.[0]?.url;
   if (!imageUrl) return json({ error: "fal_ai_no_image" }, 502);
 
-  // Cache metadata in R2 (URL reference — binary download optional later)
+  // Cache metadata in R2 when available (URL reference — binary download optional later)
   const metaKey = `${body.site_id}/${body.slot}-${Date.now()}.json`;
-  await env.IMAGES.put(
-    metaKey,
-    JSON.stringify({ image_url: imageUrl, prompt, slot: body.slot, provider: "fal.ai" }),
-    { httpMetadata: { contentType: "application/json" }, customMetadata: { provider: "fal.ai", slot: body.slot } },
-  );
+  if (env.IMAGES) {
+    await env.IMAGES.put(
+      metaKey,
+      JSON.stringify({ image_url: imageUrl, prompt, slot: body.slot, provider: "fal.ai" }),
+      { httpMetadata: { contentType: "application/json" }, customMetadata: { provider: "fal.ai", slot: body.slot } },
+    );
+  }
 
   return json({
     image_url: imageUrl,
-    storage: "r2",
+    storage: env.IMAGES ? "r2" : "none",
     provider: "fal.ai",
-    r2_meta_key: metaKey,
+    r2_meta_key: env.IMAGES ? metaKey : null,
   });
 }
 
@@ -240,9 +244,11 @@ export async function handlePublishSite(request: Request, env: Env): Promise<Res
   };
 
   const objectKey = `publishes/${body.site_id}/manifest.json`;
-  await env.IMAGES.put(objectKey, JSON.stringify(manifest, null, 2), {
-    httpMetadata: { contentType: "application/json" },
-  });
+  if (env.IMAGES) {
+    await env.IMAGES.put(objectKey, JSON.stringify(manifest, null, 2), {
+      httpMetadata: { contentType: "application/json" },
+    });
+  }
 
   const published: string[] = [];
   for (const row of pages.results as { id: string; schema_json?: string }[]) {
@@ -304,6 +310,85 @@ export async function handleListPages(env: Env, siteId: string): Promise<Respons
     .bind(siteId)
     .all();
   return json({ pages: rows.results });
+}
+
+export async function handleGetPage(env: Env, pageId: string): Promise<Response> {
+  const row = await env.DB.prepare(
+    `SELECT id, site_id, page_type, slug, title_tag, meta_description, h1, content_json, schema_json, status, service_name, location_name, updated_at
+     FROM pages WHERE id = ?`,
+  )
+    .bind(pageId)
+    .first();
+  if (!row) return json({ error: "page not found" }, 404);
+  return json({
+    id: row.id,
+    site_id: row.site_id,
+    page_type: row.page_type,
+    slug: row.slug,
+    title_tag: row.title_tag,
+    meta_description: row.meta_description,
+    h1: row.h1,
+    content: JSON.parse(String(row.content_json || "{}")),
+    schema_jsonld: JSON.parse(String(row.schema_json || "{}")),
+    status: row.status,
+    service_name: row.service_name,
+    location_name: row.location_name,
+    updated_at: row.updated_at,
+  });
+}
+
+export async function handleUpdatePage(request: Request, env: Env, pageId: string): Promise<Response> {
+  const existing = await env.DB.prepare(
+    `SELECT id, site_id, page_type, slug, title_tag, meta_description, h1, content_json, schema_json, status
+     FROM pages WHERE id = ?`,
+  )
+    .bind(pageId)
+    .first();
+  if (!existing) return json({ error: "page not found" }, 404);
+
+  const body = await readJson<{
+    title_tag?: string;
+    meta_description?: string;
+    h1?: string;
+    status?: "draft" | "published" | "a_completer";
+    content?: Record<string, unknown>;
+  }>(request);
+
+  let content: Record<string, unknown>;
+  try {
+    content = JSON.parse(String(existing.content_json || "{}")) as Record<string, unknown>;
+  } catch {
+    content = {};
+  }
+
+  if (body.content && typeof body.content === "object") {
+    content = { ...content, ...body.content };
+    if (body.content.sections && typeof body.content.sections === "object") {
+      content.sections = {
+        ...((content.sections as Record<string, unknown>) || {}),
+        ...(body.content.sections as Record<string, unknown>),
+      };
+    }
+  }
+
+  const title_tag = body.title_tag ?? String(existing.title_tag || "");
+  const meta_description = body.meta_description ?? String(existing.meta_description || "");
+  const h1 = body.h1 ?? String(existing.h1 || "");
+  const status = body.status ?? String(existing.status || "draft");
+
+  content.title_tag = title_tag;
+  content.meta_description = meta_description;
+  content.h1 = h1;
+  content.status = status;
+
+  await env.DB.prepare(
+    `UPDATE pages SET title_tag = ?, meta_description = ?, h1 = ?, content_json = ?, status = ?, updated_at = datetime('now')
+     WHERE id = ?`,
+  )
+    .bind(title_tag, meta_description, h1, JSON.stringify(content), status, pageId)
+    .run();
+
+  return handleGetPage(env, pageId);
 }
 
 export async function handleCreateSite(request: Request, env: Env): Promise<Response> {

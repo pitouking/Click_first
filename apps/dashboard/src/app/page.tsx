@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { API_BASE } from "@/lib/api";
+import { API_BASE, apiFetch, clearToolToken, getToolToken, setToolToken } from "@/lib/api";
 import { ALL_CATALOG_SERVICES, SERVICE_CATALOG } from "@click-first/shared-types";
 import type { DashboardPageRow, GbpDiagnoseResponse } from "@click-first/shared-types";
 
@@ -28,9 +28,32 @@ type SiteDetails = {
   pages: DashboardPageRow[];
 };
 
+type PageDetail = {
+  id: string;
+  site_id: string;
+  page_type: string;
+  slug: string;
+  title_tag: string;
+  meta_description: string;
+  h1: string;
+  status: "draft" | "published" | "a_completer";
+  content: {
+    sections?: {
+      intro?: string;
+      trust_building?: string;
+      cta?: string;
+      local_context?: string;
+      story?: string;
+      how_to_reach?: string;
+    };
+  };
+};
+
 const DEFAULT_LOCATIONS = ["Villeurbanne", "Lyon", "Caluire-et-Cuire"];
 
 export default function DashboardPage() {
+  const [authed, setAuthed] = useState(false);
+  const [tokenInput, setTokenInput] = useState("");
   const [tab, setTab] = useState<"sites" | "onboarding" | "pages">("sites");
   const [sites, setSites] = useState<SiteRow[]>([]);
   const [siteId, setSiteId] = useState("");
@@ -41,6 +64,8 @@ export default function DashboardPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [diagnose, setDiagnose] = useState<GbpDiagnoseResponse | null>(null);
+  const [editing, setEditing] = useState<PageDetail | null>(null);
+  const [editIntro, setEditIntro] = useState("");
 
   const [form, setForm] = useState({
     business_name: "Bâti Énergie Marcel Test",
@@ -79,7 +104,7 @@ export default function DashboardPage() {
   }, [details, pages]);
 
   const loadSites = useCallback(async () => {
-    const res = await fetch(`${API_BASE}/sites`);
+    const res = await apiFetch(`/sites`);
     if (!res.ok) throw new Error(`list sites ${res.status}`);
     const data = (await res.json()) as { sites: SiteRow[] };
     setSites(data.sites || []);
@@ -90,12 +115,14 @@ export default function DashboardPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/sites/${id}`);
+      const res = await apiFetch(`/sites/${id}`);
       if (!res.ok) throw new Error(`API ${res.status}`);
       const data = (await res.json()) as SiteDetails;
       setDetails(data);
       setPages(data.pages || []);
-      setMessage(`${data.pages?.length || 0} page(s) · ${data.services?.length || 0} services · ${data.locations?.length || 0} zones`);
+      setMessage(
+        `${data.pages?.length || 0} page(s) · ${data.services?.length || 0} services · ${data.locations?.length || 0} zones`,
+      );
       window.localStorage.setItem("click_first_site_id", id);
     } catch (err) {
       setError(String(err));
@@ -107,15 +134,44 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    void loadSites().catch((err) => setError(String(err)));
-    const params = new URLSearchParams(window.location.search);
-    const initial = params.get("site_id") || window.localStorage.getItem("click_first_site_id") || "";
-    if (initial) {
-      setSiteId(initial);
-      void loadSite(initial);
-      setTab("pages");
-    }
+    const existing = getToolToken();
+    if (!existing) return;
+    setTokenInput(existing);
+    void apiFetch("/sites")
+      .then(async (res) => {
+        if (!res.ok) throw new Error(String(res.status));
+        setAuthed(true);
+        await loadSites();
+        const params = new URLSearchParams(window.location.search);
+        const initial = params.get("site_id") || window.localStorage.getItem("click_first_site_id") || "";
+        if (initial) {
+          setSiteId(initial);
+          await loadSite(initial);
+          setTab("pages");
+        }
+      })
+      .catch(() => {
+        clearToolToken();
+        setAuthed(false);
+      });
   }, [loadSite, loadSites]);
+
+  async function onUnlock() {
+    setError(null);
+    setToolToken(tokenInput);
+    try {
+      const res = await apiFetch("/sites");
+      if (res.status === 401) throw new Error("Jeton invalide");
+      if (!res.ok) throw new Error(`API ${res.status}`);
+      setAuthed(true);
+      setMessage(`Connecté à ${API_BASE}`);
+      await loadSites();
+    } catch (err) {
+      clearToolToken();
+      setAuthed(false);
+      setError(String(err));
+    }
+  }
 
   async function onCreateSite() {
     setBusy(true);
@@ -125,9 +181,8 @@ export default function DashboardPage() {
       const locations = form.locations.split("\n").map((s) => s.trim()).filter(Boolean);
       const secondary = form.secondary_categories.split(",").map((s) => s.trim()).filter(Boolean);
 
-      const diagRes = await fetch(`${API_BASE}/gbp/diagnose`, {
+      const diagRes = await apiFetch(`/gbp/diagnose`, {
         method: "POST",
-        headers: { "content-type": "application/json" },
         body: JSON.stringify({
           business_name: form.business_name,
           categories: { primary: form.primary_category, secondary },
@@ -142,9 +197,8 @@ export default function DashboardPage() {
       const diag = (await diagRes.json()) as GbpDiagnoseResponse;
       setDiagnose(diag);
 
-      const res = await fetch(`${API_BASE}/sites`, {
+      const res = await apiFetch(`/sites`, {
         method: "POST",
-        headers: { "content-type": "application/json" },
         body: JSON.stringify({
           business_profile: {
             business_name: form.business_name,
@@ -182,7 +236,7 @@ export default function DashboardPage() {
     if (!siteId) return;
     setBusy(true);
     try {
-      const res = await fetch(`${API_BASE}/sites/${siteId}/sync-gbp`, { method: "POST" });
+      const res = await apiFetch(`/sites/${siteId}/sync-gbp`, { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "sync failed");
       setDiagnose(data);
@@ -200,9 +254,8 @@ export default function DashboardPage() {
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/generate-matrix`, {
+      const res = await apiFetch(`/generate-matrix`, {
         method: "POST",
-        headers: { "content-type": "application/json" },
         body: JSON.stringify({ site_id: siteId, include_core_pages: true }),
       });
       const data = await res.json();
@@ -220,9 +273,8 @@ export default function DashboardPage() {
     if (!siteId || !draftIds.length) return;
     setBusy(true);
     try {
-      const res = await fetch(`${API_BASE}/publish-site`, {
+      const res = await apiFetch(`/publish-site`, {
         method: "POST",
-        headers: { "content-type": "application/json" },
         body: JSON.stringify({
           site_id: siteId,
           page_ids: draftIds,
@@ -240,13 +292,104 @@ export default function DashboardPage() {
     }
   }
 
+  async function openEditor(pageId: string) {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await apiFetch(`/pages/${pageId}`);
+      const data = (await res.json()) as PageDetail;
+      if (!res.ok) throw new Error((data as { error?: string }).error || "load page failed");
+      setEditing(data);
+      setEditIntro(data.content?.sections?.intro || "");
+      setMessage(`Édition: ${data.slug || "/"}`);
+      requestAnimationFrame(() => {
+        document.getElementById("page-editor")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveEditor() {
+    if (!editing) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await apiFetch(`/pages/${editing.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          title_tag: editing.title_tag,
+          meta_description: editing.meta_description,
+          h1: editing.h1,
+          status: editing.status === "published" ? "draft" : editing.status,
+          content: {
+            sections: {
+              ...(editing.content?.sections || {}),
+              intro: editIntro,
+            },
+          },
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "save failed");
+      setMessage(`Page corrigée: ${editing.slug || "/"} (repassée en draft si besoin)`);
+      setEditing(null);
+      if (siteId) await loadSite(siteId);
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!authed) {
+    return (
+      <main>
+        <div className="panel">
+          <h1>Monsieur Click — accès outil</h1>
+          <p className="muted">
+            Entrez le jeton d’accès (TOOL_ACCESS_TOKEN). API: <code>{API_BASE}</code>
+          </p>
+          {error && <p className="error">{error}</p>}
+          <label className="full">
+            Jeton
+            <input
+              type="password"
+              value={tokenInput}
+              onChange={(e) => setTokenInput(e.target.value)}
+              placeholder="coller le jeton"
+              autoComplete="off"
+            />
+          </label>
+          <div className="row">
+            <button type="button" onClick={() => void onUnlock()} disabled={!tokenInput.trim()}>
+              Déverrouiller
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main>
       <div className="panel">
-        <h1>Click_first — admin</h1>
+        <h1>Monsieur Click — admin</h1>
         <p className="muted">
-          Auth via Cloudflare Access. Aucune clé API côté navigateur. Catalogue :{" "}
-          {Object.keys(SERVICE_CATALOG).join(" · ")}.
+          API {API_BASE}. Catalogue: {Object.keys(SERVICE_CATALOG).join(" · ")}.
+          <button
+            type="button"
+            className="ghost"
+            style={{ marginLeft: 8 }}
+            onClick={() => {
+              clearToolToken();
+              setAuthed(false);
+            }}
+          >
+            Déconnexion
+          </button>
         </p>
 
         <div className="row">
@@ -257,7 +400,7 @@ export default function DashboardPage() {
             Onboarding
           </button>
           <button type="button" className={tab === "pages" ? "" : "ghost"} onClick={() => setTab("pages")}>
-            Pages & matrice
+            Pages & corrections
           </button>
         </div>
 
@@ -420,6 +563,85 @@ export default function DashboardPage() {
               </div>
             )}
 
+            {editing && (
+              <div id="page-editor" className="checklist" style={{ marginBottom: 16 }}>
+                <h3>
+                  Corriger — {editing.slug || "/"} ({editing.page_type})
+                </h3>
+                <div className="form-grid">
+                  <label className="full">
+                    Title tag
+                    <input
+                      value={editing.title_tag || ""}
+                      onChange={(e) => setEditing({ ...editing, title_tag: e.target.value })}
+                    />
+                  </label>
+                  <label className="full">
+                    Meta description
+                    <textarea
+                      rows={2}
+                      value={editing.meta_description || ""}
+                      onChange={(e) => setEditing({ ...editing, meta_description: e.target.value })}
+                    />
+                  </label>
+                  <label className="full">
+                    H1
+                    <input value={editing.h1 || ""} onChange={(e) => setEditing({ ...editing, h1: e.target.value })} />
+                  </label>
+                  <label className="full">
+                    Intro
+                    <textarea rows={6} value={editIntro} onChange={(e) => setEditIntro(e.target.value)} />
+                  </label>
+                </div>
+                <div className="row">
+                  <button type="button" disabled={busy} onClick={() => void saveEditor()}>
+                    {busy ? "Enregistrement…" : "Enregistrer les corrections"}
+                  </button>
+                  <button type="button" className="ghost" onClick={() => setEditing(null)}>
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <h2>Pages (corriger ici)</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Slug</th>
+                  <th>Title</th>
+                  <th>Statut</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {pages.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="muted">
+                      Aucune page.
+                    </td>
+                  </tr>
+                ) : (
+                  pages.map((p) => (
+                    <tr key={p.id}>
+                      <td>{p.page_type}</td>
+                      <td>{p.slug || "/"}</td>
+                      <td>{p.title_tag}</td>
+                      <td>
+                        <span className={`badge ${p.status}`}>{p.status}</span>
+                      </td>
+                      <td>
+                        <button type="button" className="ghost" disabled={busy} onClick={() => void openEditor(p.id)}>
+                          Corriger
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+
             <h2>Matrice Services × Locations</h2>
             <div className="matrix">
               {matrixCells.length === 0 ? (
@@ -451,38 +673,6 @@ export default function DashboardPage() {
                 </table>
               )}
             </div>
-
-            <h2>Pages</h2>
-            <table>
-              <thead>
-                <tr>
-                  <th>Type</th>
-                  <th>Slug</th>
-                  <th>Title</th>
-                  <th>Statut</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pages.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="muted">
-                      Aucune page.
-                    </td>
-                  </tr>
-                ) : (
-                  pages.map((p) => (
-                    <tr key={p.id}>
-                      <td>{p.page_type}</td>
-                      <td>{p.slug || "/"}</td>
-                      <td>{p.title_tag}</td>
-                      <td>
-                        <span className={`badge ${p.status}`}>{p.status}</span>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
           </section>
         )}
       </div>
