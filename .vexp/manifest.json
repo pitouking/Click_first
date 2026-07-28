@@ -1,6 +1,6 @@
 {
   "file_hashes": {
-    "AGENTS.md": "7e1a137d5d6c070994c71b630be83487787e3bfcbba5f6c65980dc65260ea773",
+    "AGENTS.md": "ac62fb103f7f4606470de1d0061214fc4e7018673bc3b0437f79016249280025",
     "README.md": "4389b8a52302582739e78cc18ff3ca3e42d0729bf2cc011d16300c95d9eb2b80",
     "apps/astro-template/.astro/content.d.ts": "dc00e5071b2bfd341ce783bcd0b21f6af89a5ce4a6773f128386ead55c95b132",
     "apps/astro-template/.astro/types.d.ts": "a1acf23a880dac8dd64399474b2820e874963b0f57f9c47d718bf5baf27740ce",
@@ -18,12 +18,13 @@
     "apps/astro-template/src/pages/index.astro": "b0d82668de4fe512fb7a385b117761fb5abfbed15bb9a32af47aaf25bd02f0eb",
     "apps/dashboard/next-env.d.ts": "58be0286da22e48ed2eab1f5476d58a9d9d70b33fb6d4ef5e3d89024240e6858",
     "apps/dashboard/next.config.ts": "b6e06966608cae209d8878da2e4cd7d8c6bd06c148dffe0ded62c8807b8d8bd6",
-    "apps/dashboard/out/_next/static/JeLD_YoHyjw9QYMXtjutA/_buildManifest.js": "7ef744a4294859db9d758b904f46aeeb0e1ace96c886ad0120a4cb4412285559",
-    "apps/dashboard/out/_next/static/JeLD_YoHyjw9QYMXtjutA/_ssgManifest.js": "4f5eeb4b6c4ae6094660bb938881ae5129c04929996548162e5f3ad6c528f3b0",
+    "apps/dashboard/out/_next/static/3utCThIGa3lLzmw1-bHIr/_buildManifest.js": "7ef744a4294859db9d758b904f46aeeb0e1ace96c886ad0120a4cb4412285559",
+    "apps/dashboard/out/_next/static/3utCThIGa3lLzmw1-bHIr/_ssgManifest.js": "4f5eeb4b6c4ae6094660bb938881ae5129c04929996548162e5f3ad6c528f3b0",
     "apps/dashboard/out/_next/static/chunks/8b9e9954-3986a01948abc0a0.js": "e8bab6f2671664ca4dbcf26dede7a87e65ddb5af2cc72998d7b1ab7f0ef82343",
     "apps/dashboard/out/_next/static/chunks/994-f2ec54e27121f972.js": "dcb47fef82ac346e5c7afb48736b018d8537b42b73a5cfc6f41535e01c81ffed",
     "apps/dashboard/out/_next/static/chunks/app/_not-found/page-1f7a4ae6a913125c.js": "ba016d71319102aae6eadaa81786e3cf86883d80ea7366ba508142a072b0d7c3",
     "apps/dashboard/out/_next/static/chunks/app/layout-f38d4e43c4fc453c.js": "50f14a2883c57158ef8c5a73c741f57c50e88c7d5bb27dbffd32d75d533cfb54",
+    "apps/dashboard/out/_next/static/chunks/app/page-24d39614eafbd79a.js": "aa124a96397d5ac5407fe51a19b0d8ae34fc79b6d744014b913253069d4e7e48",
     "apps/dashboard/out/_next/static/chunks/app/page-2ab2c250a41ee020.js": "39c6f077d401d061834874e316d1e6aee9a4911dd863ca3c6a2001b103c458e4",
     "apps/dashboard/out/_next/static/chunks/framework-fe6eb7a8f79bdf56.js": "4ae6d3c710608d9aaf5c64f2a7b5e5381ef5a4b93456dd325af78acb0076e716",
     "apps/dashboard/out/_next/static/chunks/main-app-cef5bb8cea576ba8.js": "b13fe5a49c20f352dfe0690003559eafddbf8740276a73888cde642807d53f80",
@@ -56,13 +57,13 @@
     "packages/shared-types/src/service-catalog.ts": "14010ba2e938df3d6cc364ac8e44b1013367810d8d35ad6af31e0419253d735b",
     "spec-seo-templates-saas.md": "cb6c1be084621ecf07dda5bebbb727b9c3a224a0f9d08ea621c91aeb123ec892"
   },
-  "indexed_at_commit": "61d63ccbc47b877222ce5ad17fbe504251b74cdf",
-  "indexed_at_timestamp": "2026-07-28T10:59:16.442570081+00:00",
+  "indexed_at_commit": "785c2f447265230c1435d3eeef4c1414a4afeada",
+  "indexed_at_timestamp": "2026-07-28T13:08:46.550626680+00:00",
   "schema_version": 3,
   "stats": {
     "total_edges": 5347,
-    "total_files": 55,
-    "total_nodes": 1797
+    "total_files": 56,
+    "total_nodes": 1801
   },
   "vexp_version": "2.3.1"
 }
