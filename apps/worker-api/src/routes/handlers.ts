@@ -38,33 +38,39 @@ export async function handleGeneratePage(request: Request, env: Env): Promise<Re
     return json({ error: "page_type required" }, 400);
   }
 
-  const task =
-    body.page_type === "home"
-      ? "home_copy"
-      : body.page_type === "about"
-        ? "about_copy"
-        : body.page_type === "location"
-          ? "location_copy"
-          : body.page_type === "category" || body.page_type === "contact" || body.page_type === "service"
-            ? "service_copy"
-            : "service_copy";
+  let page: PageContent;
+  if (body.prefilled_content && body.prefilled_content.page_type === body.page_type) {
+    // Cursor agent / manual path — no external LLM call
+    page = body.prefilled_content;
+  } else {
+    const task =
+      body.page_type === "home"
+        ? "home_copy"
+        : body.page_type === "about"
+          ? "about_copy"
+          : body.page_type === "location"
+            ? "location_copy"
+            : body.page_type === "category" || body.page_type === "contact" || body.page_type === "service"
+              ? "service_copy"
+              : "service_copy";
 
-  const generated = (await generateContent(
-    task,
-    {
-      business_profile: body.business_profile,
-      page_type: body.page_type,
-      service: body.service,
-      location: body.location,
-    },
-    env,
-  )) as PageContent;
+    const generated = (await generateContent(
+      task,
+      {
+        business_profile: body.business_profile,
+        page_type: body.page_type,
+        service: body.service,
+        location: body.location,
+      },
+      env,
+    )) as PageContent;
 
-  // Guarantee fixture path for category/contact even if provider returns a stub
-  const page =
-    generated && "sections" in generated && generated.sections
-      ? generated
-      : buildPageFixture(body);
+    // Guarantee fixture path for category/contact even if provider returns a stub
+    page =
+      generated && "sections" in generated && generated.sections
+        ? generated
+        : buildPageFixture(body);
+  }
 
   const { graph, missing_fields } = buildJsonLd({
     business: body.business_profile,

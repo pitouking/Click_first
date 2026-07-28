@@ -230,6 +230,8 @@ export interface GeneratePageRequest {
   service?: string | null;
   location?: string | null;
   site_id?: string;
+  /** When set (e.g. by Cursor agent), skip provider LLM and use this page JSON. */
+  prefilled_content?: PageContent;
 }
 
 export interface GenerateImageRequest {
