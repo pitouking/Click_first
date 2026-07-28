@@ -67,13 +67,13 @@ export async function generateContent(
 }
 
 function pickProvider(task: AiTask, env: Env): "anthropic" | "deepseek" | "openai" | "fixture" {
-  // Prefer OpenAI when available (current default provider for this environment).
+  // Prefer DeepSeek when available (cost-efficient default for this environment).
+  if (env.DEEPSEEK_API_KEY) return "deepseek";
   if (env.OPENAI_API_KEY) return "openai";
   if (task === "home_copy" || task === "about_copy") {
     if (env.ANTHROPIC_API_KEY) return "anthropic";
   }
   if (task === "service_copy" || task === "location_copy") {
-    if (env.DEEPSEEK_API_KEY) return "deepseek";
     if (env.ANTHROPIC_API_KEY) return "anthropic";
   }
   if (task === "gbp_diagnose" || task === "site_extract") {
@@ -389,15 +389,21 @@ async function callOpenAiCompatible(
         {
           role: "system",
           content:
-            "Tu génères du contenu SEO local en français. Réponds UNIQUEMENT avec un JSON valide qui respecte exactement le contrat de page fourni (mêmes clés). N'invente jamais de NAP, avis, notes, prix chiffrés ou certifications absents du profil.",
+            "Tu génères du contenu SEO local en français. Réponds UNIQUEMENT avec un JSON valide qui respecte exactement le contrat de page fourni (mêmes clés). N'invente jamais de NAP, avis, notes, prix chiffrés ou certifications absents du profil. IMPORTANT: ne recopie PAS les phrases d'exemple — réécris title_tag, meta_description, h1 et TOUTES les sections avec une copy originale.",
         },
         {
           role: "user",
           content: JSON.stringify({
             task,
             instructions:
-              "Remplis le contrat JSON ci-dessous avec une copy originale et locale. Garde page_type, slug pattern, schema.auto_generated=true, status=draft. Améliore title_tag, meta_description, h1 et sections.",
-            contract_example: example,
+              "Remplis le contrat JSON avec une copy originale et locale. Garde page_type, structure des clés, schema.auto_generated=true, status=draft. Change obligatoirement storybrand_title, subtitle, intro, faq et cta (textes différents de l'exemple).",
+            contract_shape_only: example,
+            must_differ_from_example_fields: [
+              "sections.hero.storybrand_title",
+              "sections.hero.subtitle",
+              "sections.intro",
+              "sections.cta",
+            ],
             payload,
           }),
         },
@@ -409,5 +415,6 @@ async function callOpenAiCompatible(
     throw new Error(`OpenAI-compatible ${res.status}: ${errText.slice(0, 200)}`);
   }
   const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-  return JSON.parse(data.choices?.[0]?.message?.content || "{}");
+  const parsed = JSON.parse(data.choices?.[0]?.message?.content || "{}");
+  return parsed;
 }

@@ -23,7 +23,7 @@
     "apps/dashboard/src/lib/api.ts": "f23db4b079dca8cab4548272b7c3d399405dece88dcf7179cf07fc79b80f0d07",
     "apps/worker-api/scripts/demo-e2e.ts": "00ac9aca4f6f5edc5249f97ab521670201349b5fc1b1e2ce03cd70e18bbf9b24",
     "apps/worker-api/scripts/demo-seed.ts": "e0dc2f512c12be72b5f4c14489446bdfa4725f0b0fe977377f406406ef2b7ae5",
-    "apps/worker-api/src/ai/generateContent.ts": "d6979ddab61e7d94f6fbb8dd0f402ff435ec8bb598195ddd0501045c6a4a0fb1",
+    "apps/worker-api/src/ai/generateContent.ts": "8440c27d2a7da82b1996fbf931690ea7c560f6e3cc163b83f8484a3058132b2e",
     "apps/worker-api/src/env.ts": "d1e3ccaf5bf36d98f77964a22e912de0366692b2a87d3269f30f0f18a3624e17",
     "apps/worker-api/src/gbp/diagnose.ts": "bd359824b4bd6e0a7bc879cd36df22535d3a754d25a5aa07ee7bc2b82e137647",
     "apps/worker-api/src/http.ts": "34d7721a54f79e45dc290e47192e0d2ea8f49d739270d587651c51f6f0c76b7c",
@@ -38,11 +38,11 @@
     "packages/shared-types/src/service-catalog.ts": "14010ba2e938df3d6cc364ac8e44b1013367810d8d35ad6af31e0419253d735b",
     "spec-seo-templates-saas.md": "cb6c1be084621ecf07dda5bebbb727b9c3a224a0f9d08ea621c91aeb123ec892"
   },
-  "indexed_at_commit": "8db03e03efa128fe02d004bf600c392180f348e7",
-  "indexed_at_timestamp": "2026-07-28T08:27:52.230809124+00:00",
+  "indexed_at_commit": "e9f33622aeabfcca61c05cfea5a98f538b70cd13",
+  "indexed_at_timestamp": "2026-07-28T08:29:35.029955020+00:00",
   "schema_version": 3,
   "stats": {
-    "total_edges": 174,
+    "total_edges": 171,
     "total_files": 37,
     "total_nodes": 247
   },
