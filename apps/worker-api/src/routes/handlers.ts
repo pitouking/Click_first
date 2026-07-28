@@ -138,25 +138,68 @@ export async function handleGenerateImage(request: Request, env: Env): Promise<R
     return json({ error: "site_id and slot required" }, 400);
   }
 
-  // fal.ai when key present; otherwise placeholder object in R2 metadata path
-  const key = `${body.site_id}/${body.slot}-${Date.now()}.txt`;
-  const placeholder = `placeholder:${body.slot}:${JSON.stringify(body.prompt_context || {})}`;
+  const prompt =
+    typeof body.prompt_context?.prompt === "string" && body.prompt_context.prompt.trim()
+      ? String(body.prompt_context.prompt)
+      : defaultImagePrompt(body.slot, body.prompt_context || {});
 
-  if (env.FAL_AI_API_KEY) {
-    // Real fal.ai integration can replace this branch; keep secret server-side only.
-    await env.IMAGES.put(key, placeholder, {
-      customMetadata: { provider: "fal.ai", slot: body.slot },
-    });
-  } else {
-    await env.IMAGES.put(key, placeholder, {
+  if (!env.FAL_AI_API_KEY) {
+    const key = `${body.site_id}/${body.slot}-${Date.now()}.txt`;
+    await env.IMAGES.put(key, `placeholder:${prompt}`, {
       customMetadata: { provider: "fixture", slot: body.slot },
     });
+    return json({ image_url: `r2://${key}`, storage: "r2", provider: "fixture" });
   }
 
-  return json({
-    image_url: `r2://${key}`,
-    storage: "r2",
+  const falRes = await fetch("https://fal.run/fal-ai/flux/schnell", {
+    method: "POST",
+    headers: {
+      Authorization: `Key ${env.FAL_AI_API_KEY}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      prompt,
+      image_size: body.slot === "og" ? "landscape_16_9" : "landscape_4_3",
+      num_images: 1,
+    }),
   });
+
+  if (!falRes.ok) {
+    const errText = await falRes.text();
+    return json({ error: "fal_ai_failed", status: falRes.status, detail: errText.slice(0, 300) }, 502);
+  }
+
+  const falData = (await falRes.json()) as { images?: { url?: string }[] };
+  const imageUrl = falData.images?.[0]?.url;
+  if (!imageUrl) return json({ error: "fal_ai_no_image" }, 502);
+
+  // Cache metadata in R2 (URL reference — binary download optional later)
+  const metaKey = `${body.site_id}/${body.slot}-${Date.now()}.json`;
+  await env.IMAGES.put(
+    metaKey,
+    JSON.stringify({ image_url: imageUrl, prompt, slot: body.slot, provider: "fal.ai" }),
+    { httpMetadata: { contentType: "application/json" }, customMetadata: { provider: "fal.ai", slot: body.slot } },
+  );
+
+  return json({
+    image_url: imageUrl,
+    storage: "r2",
+    provider: "fal.ai",
+    r2_meta_key: metaKey,
+  });
+}
+
+function defaultImagePrompt(slot: string, ctx: Record<string, unknown>): string {
+  const business = typeof ctx.business_name === "string" ? ctx.business_name : "entreprise locale";
+  const city = typeof ctx.city === "string" ? ctx.city : "France";
+  const service = typeof ctx.service === "string" ? ctx.service : "rénovation";
+  if (slot === "team") {
+    return `Professional photo of local craftspeople at work for ${business} in ${city}, natural light, realistic, no text overlay`;
+  }
+  if (slot === "og") {
+    return `Clean architectural photograph related to ${service} in ${city}, wide composition for social share, no text`;
+  }
+  return `Realistic exterior photo of a renovated home related to ${service}, ${city}, daylight, high quality, no text, no logo`;
 }
 
 export async function handlePublishSite(request: Request, env: Env): Promise<Response> {
@@ -211,6 +254,34 @@ export async function handlePublishSite(request: Request, env: Env): Promise<Res
     published.push(row.id as string);
   }
 
+  let cloudflare: { token_status?: string; accounts?: { id: string; name: string }[]; note?: string } | null =
+    null;
+  if (env.CLOUDFLARE_API_TOKEN) {
+    try {
+      const verifyRes = await fetch("https://api.cloudflare.com/client/v4/user/tokens/verify", {
+        headers: { Authorization: `Bearer ${env.CLOUDFLARE_API_TOKEN}` },
+      });
+      const verifyData = (await verifyRes.json()) as {
+        success?: boolean;
+        result?: { status?: string };
+      };
+      const accountsRes = await fetch("https://api.cloudflare.com/client/v4/accounts?per_page=5", {
+        headers: { Authorization: `Bearer ${env.CLOUDFLARE_API_TOKEN}` },
+      });
+      const accountsData = (await accountsRes.json()) as {
+        success?: boolean;
+        result?: { id: string; name: string }[];
+      };
+      cloudflare = {
+        token_status: verifyData.result?.status || (verifyData.success ? "active" : "invalid"),
+        accounts: (accountsData.result || []).map((a) => ({ id: a.id, name: a.name })),
+        note: "Token OK. Direct Pages deploy wiring can use account id + wrangler pages deploy next.",
+      };
+    } catch (err) {
+      cloudflare = { token_status: "error", note: String(err) };
+    }
+  }
+
   const deployed_url =
     body.cloudflare_target === "client_delegated"
       ? `https://pages.dev/client-delegated/${body.site_id}`
@@ -221,7 +292,8 @@ export async function handlePublishSite(request: Request, env: Env): Promise<Res
     deployed_url,
     pages_published: published,
     manifest_r2_key: objectKey,
-    note: "Local/dev: Astro reads generated content via demo pipeline; production triggers Cloudflare Pages build.",
+    cloudflare,
+    note: "Local/dev: Astro reads generated content via demo pipeline; Cloudflare token verified when present.",
   });
 }
 

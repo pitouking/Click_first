@@ -3,7 +3,7 @@
     "AGENTS.md": "86e2437d09f4f7b79da409c18b5a5accc8d46da8109ddbe61515312f64622c09",
     "README.md": "4389b8a52302582739e78cc18ff3ca3e42d0729bf2cc011d16300c95d9eb2b80",
     "apps/astro-template/.astro/content.d.ts": "dc00e5071b2bfd341ce783bcd0b21f6af89a5ce4a6773f128386ead55c95b132",
-    "apps/astro-template/.astro/types.d.ts": "a1acf23a880dac8dd64399474b2820e874963b0f57f9c47d718bf5baf27740ce",
+    "apps/astro-template/.astro/types.d.ts": "6540fc000a2f0d380ded117cde3c2aa10dc4cd562f537c486921d25207a0ed8e",
     "apps/astro-template/astro.config.mjs": "d4a2fc47c0c9ccccb20cb5b301007e39b3b367483cd01e3fa61ed4e4f600797f",
     "apps/astro-template/src/components/FaqAccordion.astro": "d4c03fe71b5550aa52413b1172502bcfa0a16f5fb19013b208b4ec5146869027",
     "apps/astro-template/src/components/Footer.astro": "66d28fd27251112c11359fdf86f72114c654cff95e2c6897f23fc5b3d0d01597",
@@ -28,7 +28,7 @@
     "apps/worker-api/src/gbp/diagnose.ts": "bd359824b4bd6e0a7bc879cd36df22535d3a754d25a5aa07ee7bc2b82e137647",
     "apps/worker-api/src/http.ts": "34d7721a54f79e45dc290e47192e0d2ea8f49d739270d587651c51f6f0c76b7c",
     "apps/worker-api/src/index.ts": "bba8db086164e7387fb61cc6a10c8f8a663a199a54d7235753152d95c74b72ef",
-    "apps/worker-api/src/routes/handlers.ts": "e3d26bf06d2cd842a2b2a95e2f4d78a3951c5abfb090b2d6280ab2443c01e493",
+    "apps/worker-api/src/routes/handlers.ts": "ca1a6cd64ae084f2f65eb307c9fc4609214641587d4e0ba9ef2f65fb41d49362",
     "apps/worker-api/src/schema/buildJsonLd.test.ts": "108388c0bfc2dacb0f896ea2cd167bf08f9297cbd35917cbe506c764ef9564fe",
     "apps/worker-api/src/schema/buildJsonLd.ts": "f577724b894ac7b16a4e3a95d56315e86bce99918dc55e449ad65cbf213ae9ca",
     "apps/worker-api/src/site/extract.ts": "f05de8187d05d7ca3e9655f806d7d550753c5f7d2b86217d4dc4023f562b0db8",
@@ -38,13 +38,13 @@
     "packages/shared-types/src/service-catalog.ts": "14010ba2e938df3d6cc364ac8e44b1013367810d8d35ad6af31e0419253d735b",
     "spec-seo-templates-saas.md": "cb6c1be084621ecf07dda5bebbb727b9c3a224a0f9d08ea621c91aeb123ec892"
   },
-  "indexed_at_commit": "e9f33622aeabfcca61c05cfea5a98f538b70cd13",
-  "indexed_at_timestamp": "2026-07-28T08:29:35.029955020+00:00",
+  "indexed_at_commit": "563db880fb7f00d66f9bd0d60c14f9c59d28911f",
+  "indexed_at_timestamp": "2026-07-28T10:34:46.359180631+00:00",
   "schema_version": 3,
   "stats": {
-    "total_edges": 171,
+    "total_edges": 149,
     "total_files": 37,
-    "total_nodes": 247
+    "total_nodes": 248
   },
   "vexp_version": "2.3.1"
 }
